@@ -7,11 +7,15 @@ import Data.Char (ord, chr)
 import Text.Printf
 import qualified Data.Vector as V
 
-data Cell = Cell Int Int deriving (Show)
-
-type Board = [Cell]
-
+type Player = Int
+data Cell = Cell Player Int deriving (Show)
+type Board = Vector Cell
 type Rnd a = Rand StdGen a
+
+data GameTree = GameTree { board :: Board
+                         , player :: Player
+                         , moves :: [GameTree]
+                         }
 
 randCell :: Int -> Int -> Rnd Cell
 randCell p d = do
