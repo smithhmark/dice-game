@@ -19,6 +19,9 @@ data GameTree = GameTree { player :: Player
                          } deriving (Show, Eq)
 
 dummyBoard = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 3 ]
+attackTestBoard = V.fromList [Cell 0 3, Cell 0 2, Cell 1 2, Cell 1 3 ]
+attackTestBoard2 = V.fromList [Cell 0 3, Cell 1 2, Cell 1 2, Cell 1 1 ]
+attackTestBoard3 = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 1 ]
 
 buildTree :: GameSetup -> Board -> Player -> Int -> Bool -> GameTree
 buildTree g brd plyr srdc fm =
@@ -61,12 +64,22 @@ neighbors g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g2, g3]
         g3 = case rightEdgeP of False -> [pos + 1, down, down + 1]
                                 True -> [down]
 
+playerCells:: GameSetup -> Board -> Player -> [Int]
+playerCells g b p = V.toList $ V.findIndices (ownedByP p) b
+
+potentialTargets :: Player -> Board -> [Int] -> [[Int]] -> [(Int, [Int])]
+potentialTargets p b srcs ns = zip srcs enemies
+  where enemies = map (filter (\x-> not (ownedByP p (b ! x)))) ns
+
+winnable :: Player -> Board -> [(Int, [Int])] -> [(Int, [Int])]
+winnable p b pts = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds)) pts 
+
 attacks :: GameSetup -> Board -> Player -> [ (Int, Int) ]
-attacks g b p = undefined
-  where srcs = V.toList $ V.findIndices (ownedByP p) b
+attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
+  where srcs = playerCells g b p
         ns = map (neighbors g b) srcs
-        trgts = map (filter (\x-> not (ownedByP p (b ! x)))) ns
-        -- HERE!!!
+        pts = potentialTargets p b srcs ns
+        val = winnable p b pts 
 
 addAttackingMoves :: GameSetup -> Board -> Player -> Int -> [GameTree]
 addAttackingMoves g b p sprd = undefined
