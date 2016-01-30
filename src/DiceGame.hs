@@ -18,6 +18,8 @@ data GameTree = GameTree { player :: Player
                          , moves :: [GameTree]
                          } deriving (Show, Eq)
 
+dummyBoard = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 3 ]
+
 buildTree :: GameSetup -> Board -> Player -> Int -> Bool -> GameTree
 buildTree g brd plyr srdc fm =
   GameTree plyr brd $ addPassingMoves g brd plyr srdc fm $ addAttackingMoves g brd plyr srdc
@@ -46,7 +48,7 @@ ownedByP :: Player -> Cell -> Bool
 ownedByP p c = p == owner c
 
 neighbors :: GameSetup -> Board -> Int -> [Int]
-neighbors g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g1, g2, g3]
+neighbors g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g2, g3]
   where sz = boardSize g
         up = pos - sz
         down = pos + sz
@@ -54,11 +56,10 @@ neighbors g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g1, g2, 
                                          _ -> False
         rightEdgeP = case (pos + 1) `mod` sz of 0 -> True
                                                 _ -> False
-        g1 = [ up , down]
-        g2 = case leftEdgeP of False -> [up -1, pos -1]
-                               True -> []
-        g3 = case rightEdgeP of False -> [up + 1, pos + 1]
-                                True -> []
+        g2 = case leftEdgeP of False -> [up -1, up, pos -1]
+                               True -> [up]
+        g3 = case rightEdgeP of False -> [pos + 1, down, down + 1]
+                                True -> [down]
 
 attacks :: GameSetup -> Board -> Player -> [ (Int, Int) ]
 attacks g b p = undefined

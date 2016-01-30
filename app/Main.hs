@@ -31,7 +31,6 @@ stringifyBoard s b = concat ls
         ps = [ concat $ (take (s - x) $ repeat "  ") | x <- [0..(s - 1)] ]
         ls = zipWith (++) ps ss
 
-dummyBoard = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 3 ]
 
 main :: IO ()
 main = do

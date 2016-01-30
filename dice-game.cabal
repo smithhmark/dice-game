@@ -27,3 +27,11 @@ executable dice-game
                        , random
                        , MonadRandom
 
+test-suite dice-game-test
+  type:                 exitcode-stdio-1.0
+  hs-source-dirs:       test
+  main-is:              Spec.hs
+  build-depends:        base
+                      , hspec
+                      , dice-game
+
