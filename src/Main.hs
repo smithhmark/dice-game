@@ -8,15 +8,16 @@ import Text.Printf
 import qualified Data.Vector as V
 
 type Player = Int
-data Cell = Cell Player Int deriving (Show)
+data Cell = Cell Player Int deriving (Show, Eq)
 type Board = Vector Cell
 type Rnd a = Rand StdGen a
 
 data GameTree = GameTree { board :: Board
                          , player :: Player
-                         , moves :: [GameTree]
+                         , spareDice :: Int
                          , fstMv :: Bool
-                         }
+                         , moves :: [GameTree]
+                         } deriving (Show, Eq)
 
 randCell :: Int -> Int -> Rnd Cell
 randCell p d = do
