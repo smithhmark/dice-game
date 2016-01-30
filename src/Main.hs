@@ -15,6 +15,7 @@ type Rnd a = Rand StdGen a
 data GameTree = GameTree { board :: Board
                          , player :: Player
                          , moves :: [GameTree]
+                         , fstMv :: Bool
                          }
 
 randCell :: Int -> Int -> Rnd Cell
