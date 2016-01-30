@@ -36,15 +36,8 @@ dummyBoard = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 3 ]
 
 main :: IO ()
 main = do
-  g <- getStdGen
-  --print $ take 10 (randomRs ('a', 'z') g)
-  --print $ take 10 (randoms g :: [Double])
-  --aCell <- evalRandIO $ randCell 2 3
-  --print aCell
-
   brd <- evalRandIO $ randBoard 4 2 3
   print brd
   putStr $ stringifyBoard 2 brd
   putStr $ stringifyBoard 2 $ dummyBoard
 
-  putStrLn "hello world"
