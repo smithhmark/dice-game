@@ -3,7 +3,8 @@ module Main where
 import Data.Vector (Vector, cons, (!), (!?), (//))
 import System.Random
 import Control.Monad.Random
-
+import Data.Char (ord, chr)
+import Text.Printf
 import qualified Data.Vector as V
 
 data Cell = Cell Int Int deriving (Show)
@@ -20,15 +21,30 @@ randCell p d = do
 
 randBoard :: Int -> Int -> Int -> Rnd (Vector Cell)
 randBoard l p d = V.replicateM l $randCell p d
-  
+
+stringifyCell :: Cell -> String
+stringifyCell (Cell p d) = printf "%c-%d" (chr (p + ord 'a')) d
+
+stringifyBoard :: Int -> Vector Cell -> String
+stringifyBoard s b = concat ls
+  where idxs = [ x * s | x <- [0..(s - 1)] ]
+        ss = [ V.foldr (\c a -> stringifyCell c ++ " " ++ a) "\n" $ V.slice x s b | x  <- idxs ]
+        ps = [ concat $ (take (s - x) $ repeat "  ") | x <- [0..(s - 1)] ]
+        ls = zipWith (++) ps ss
+
+dummyBoard = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 3 ]
+
 main :: IO ()
 main = do
   g <- getStdGen
-  print $ take 10 (randomRs ('a', 'z') g)
+  --print $ take 10 (randomRs ('a', 'z') g)
   --print $ take 10 (randoms g :: [Double])
-  aCell <- evalRandIO $ randCell 2 3
-  print aCell
+  --aCell <- evalRandIO $ randCell 2 3
+  --print aCell
 
   brd <- evalRandIO $ randBoard 4 2 3
   print brd
+  putStr $ stringifyBoard 2 brd
+  putStr $ stringifyBoard 2 $ dummyBoard
+
   putStrLn "hello world"
