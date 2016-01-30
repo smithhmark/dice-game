@@ -34,8 +34,15 @@ stringifyBoard s b = concat ls
 
 main :: IO ()
 main = do
-  brd <- evalRandIO $ randBoard 4 2 3
-  print brd
-  putStr $ stringifyBoard 2 brd
+  --brd <- evalRandIO $ randBoard 4 2 3
+  --print brd
+  --putStr $ stringifyBoard 2 brd
+  print "dummyBoard:"
   putStr $ stringifyBoard 2 $ dummyBoard
+  print "attackTestBoard:"
+  putStr $ stringifyBoard 2 $ attackTestBoard
+  print "attackTestBoard2:"
+  putStr $ stringifyBoard 2 $ attackTestBoard2
+  print "attackTestBoard3:"
+  putStr $ stringifyBoard 2 $ attackTestBoard3
 
