@@ -9,12 +9,11 @@ type Board = Vector Cell
 
 data GameSetup = GameSetup { playerCnt :: Int
                            , boardSize :: Int
+                           , maxDice :: Int
                            } deriving (Show)
 
 data GameTree = GameTree { player :: Player
                          , board :: Board
-                         --, spareDice :: Int
-                         --, fstMv :: Bool
                          , moves :: [GameTree]
                          } deriving (Show, Eq)
 
@@ -34,12 +33,21 @@ addPassingMoves :: GameSetup -> Board -> Player -> Int -> Bool -> [GameTree] -> 
 addPassingMoves g brd plyr srdc True mvs = mvs
 addPassingMoves g brd plyr srdc False mvs = 
    (buildTree g 
-             (addNewDice brd plyr (srdc - 1)) 
+             (addNewDice g brd plyr (srdc - 1)) 
              (nxtPlyr plyr g) 
              0 
              True) : mvs
 
-addNewDice = undefined
+addNewDice :: GameSetup -> Board -> Player -> Int -> Board
+addNewDice g b p d = 
+  case d > spots of True -> undefined
+                    False -> b // updates
+  where pcs = playerCells g b p
+        haveRoom = filter (\i-> maxDice g > diceAt i b) pcs
+        spots = length haveRoom
+        uB d (i:is) = (i, Cell p (diceAt i b + 1) ):uB (d-1) is
+        uB 0 _ = []
+        updates = uB d haveRoom
 
 playerAt :: Int -> Board -> Player
 playerAt pos brd = owner $ brd ! pos
