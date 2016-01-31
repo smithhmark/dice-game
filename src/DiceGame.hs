@@ -45,8 +45,9 @@ addNewDice g b p d =
   where pcs = playerCells g b p
         haveRoom = filter (\i-> maxDice g > diceAt i b) pcs
         spots = length haveRoom
-        uB d (i:is) = (i, Cell p (diceAt i b + 1) ):uB (d-1) is
+        uB d (i:is) = (i, Cell p (diceAt i b + 1)):uB (d-1) is
         uB 0 _ = []
+        uB _ [] = []
         updates = uB d haveRoom
 
 playerAt :: Int -> Board -> Player
