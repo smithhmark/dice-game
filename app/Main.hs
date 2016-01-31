@@ -46,3 +46,7 @@ main = do
   print "attackTestBoard3:"
   putStr $ stringifyBoard 2 $ attackTestBoard3
 
+  let silly = V.fromList [Cell 0 1,Cell 1 1,Cell 0 2, Cell 1 1]
+  let gs = GameSetup 2 2 3
+  let tree = buildTree gs silly 0 0 True
+  print tree
