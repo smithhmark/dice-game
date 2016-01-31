@@ -112,11 +112,17 @@ attackBoard b p (src,dst) d = b // [sc, dc]
 
 printInfo :: GameSetup -> GameTree -> IO ()
 printInfo g t = do
-  putStr "\n"
-  putStr $ printf "current player = %s" $ playerLabel $ player t
+  putStrLn ""
+  putStrLn $ printf "current player = %s" $ playerLabel $ player t
   putStr . stringifyBoard g $ board t
 
-announceWinner = undefined
+announceWinner :: Board -> IO ()
+announceWinner b = do
+  putStrLn ""
+  let w = winners b
+  --case length w of 1 -> putStrLn $ "The winner is:" ++ playerLabel $ head w
+  case length w of 1 -> putStrLn $ "The winner is:" ++ show w
+                   _ -> putStrLn $ "The game is a tie between:" ++ show w
 
 formatMoveOpt :: Int -> GameTree -> String
 formatMoveOpt i (GameTree p b Nothing m) = printf "%d end turn" i
@@ -127,7 +133,7 @@ handleHuman t = do
   putStrLn ""
   putStrLn "choose your move:"
   let moveCount = length $ moves t
-      descs = [formatMoveOpt i (moves t !! i) | i <- [0..moveCount]]
+      descs = [formatMoveOpt i (moves t !! i) | i <- [0..(moveCount-1)]]
   mapM putStrLn descs
   opt <- getLine
   let i = read opt :: Int
@@ -149,7 +155,7 @@ winners b = map snd $ filter (\c-> fst c == mx) cnts
 playVsHuman :: GameSetup -> GameTree -> IO ()
 playVsHuman g t = do
   printInfo g t
-  case length (moves t) of 0 -> announceWinner g $ board t
+  case length (moves t) of 0 -> announceWinner $ board t
                            _ -> do 
                              board <- handleHuman t
                              playVsHuman g board
