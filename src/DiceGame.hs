@@ -2,10 +2,14 @@ module DiceGame where
 
 import Data.Vector (Vector, cons, (!), (!?), (//))
 import qualified Data.Vector as V
+import Data.Char (ord, chr)
+import Text.Printf
 
 type Player = Int
 data Cell = Cell {owner :: Player, dice :: Int} deriving (Show, Eq)
 type Board = Vector Cell
+
+type Attack = (Int, Int)
 
 data GameSetup = GameSetup { playerCnt :: Int
                            , boardSize :: Int
@@ -14,6 +18,7 @@ data GameSetup = GameSetup { playerCnt :: Int
 
 data GameTree = GameTree { player :: Player
                          , board :: Board
+                         , attack :: Maybe Attack
                          , moves :: [GameTree]
                          } deriving (Show, Eq)
 
@@ -22,9 +27,9 @@ attackTestBoard = V.fromList [Cell 0 3, Cell 0 2, Cell 1 2, Cell 1 3 ]
 attackTestBoard2 = V.fromList [Cell 0 3, Cell 1 2, Cell 1 2, Cell 1 1 ]
 attackTestBoard3 = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 1 ]
 
-buildTree :: GameSetup -> Board -> Player -> Int -> Bool -> GameTree
-buildTree g brd plyr srdc fm =
-  GameTree plyr brd $ addPassingMoves g brd plyr srdc fm $ addAttackingMoves g brd plyr srdc
+buildTree :: GameSetup -> Board -> Player -> Int -> Bool -> Maybe Attack -> GameTree
+buildTree g brd plyr srdc fm atk =
+  GameTree plyr brd atk $ addPassingMoves g brd plyr srdc fm $ addAttackingMoves g brd plyr srdc
 
 nxtPlyr :: Player -> GameSetup -> Player
 nxtPlyr p g = mod (p + 1) $ playerCnt g
@@ -36,7 +41,8 @@ addPassingMoves g brd plyr srdc False mvs =
              (addNewDice g brd plyr (srdc - 1)) 
              (nxtPlyr plyr g) 
              0 
-             True) : mvs
+             True
+             Nothing) : mvs
 
 addNewDice :: GameSetup -> Board -> Player -> Int -> Board
 addNewDice g b p d = 
@@ -96,7 +102,7 @@ addAttackingMoves g b p sprd = gts
         dice1 = map (\(s, _)-> diceAt s b) ats
         dice2 = map (\(_, d)-> diceAt d b) ats
         zd = zip3 ats dice1 dice2
-        gts = [buildTree g (attackBoard b p a ds) p (sprd + dd) False | 
+        gts = [buildTree g (attackBoard b p a ds) p (sprd + dd) False $ Just a | 
                (a, ds, dd) <- zd]
 
 attackBoard :: Board -> Player -> (Int, Int) -> Int -> Board
@@ -104,3 +110,76 @@ attackBoard b p (src,dst) d = b // [sc, dc]
   where sc = (src, Cell p 1)
         dc = (dst, Cell p (d - 1))
 
+printInfo :: GameSetup -> GameTree -> IO ()
+printInfo g t = do
+  putStr "\n"
+  putStr $ printf "current player = %s" $ playerLabel $ player t
+  putStr . stringifyBoard g $ board t
+
+announceWinner = undefined
+
+formatMoveOpt :: Int -> GameTree -> String
+formatMoveOpt i (GameTree p b Nothing m) = printf "%d end turn" i
+formatMoveOpt i (GameTree p b (Just (s,d)) m) = printf "%d  %d -> %d" i s d
+
+handleHuman :: GameTree -> IO GameTree
+handleHuman t = do
+  putStrLn ""
+  putStrLn "choose your move:"
+  let moveCount = length $ moves t
+      descs = [formatMoveOpt i (moves t !! i) | i <- [0..moveCount]]
+  mapM putStrLn descs
+  opt <- getLine
+  let i = read opt :: Int
+  return $ (moves t) !! i
+
+playerCounts :: Board -> [(Int, Player)] -> [(Int, Player)]
+playerCounts b ws = case lo of 0 -> (lp, p):ws
+                               _ -> playerCounts ocs $ (lp, p):ws
+  where p = playerAt 0 b
+        (pcs, ocs) = V.partition (\c-> p == owner c) b
+        lp = V.length pcs
+        lo = V.length ocs
+
+winners :: Board -> [Player]
+winners b = map snd $ filter (\c-> fst c == mx) cnts
+  where cnts = playerCounts b []
+        mx = foldl (\a (c, _p)-> if c > a then c else a) 0 cnts
+
+playVsHuman :: GameSetup -> GameTree -> IO ()
+playVsHuman g t = do
+  printInfo g t
+  case length (moves t) of 0 -> announceWinner g $ board t
+                           _ -> do 
+                             board <- handleHuman t
+                             playVsHuman g board
+
+playerLabel p = [chr (p + ord 'a')]
+
+stringifyCell :: Cell -> String
+stringifyCell (Cell p d) = printf "%s-%d" (playerLabel p) d
+
+stringifyBoard :: GameSetup -> Vector Cell -> String
+stringifyBoard g b = paddedStringifyBoard g b 0
+
+paddedStringifyBoard :: GameSetup -> Vector Cell -> Int -> String
+paddedStringifyBoard g b p = concat ls
+  where s = boardSize g
+        idxs = [ x * s | x <- [0..(s - 1)] ]
+        ss = [ V.foldr (\c a -> stringifyCell c ++ " " ++ a) "\n" $ V.slice x s b | x  <- idxs ]
+        p1s = [ concat $ (take (s - x) $ repeat "  ") | x <- [0..(s - 1)] ]
+        p2s = [ concat $ (take (p) (cycle [" ","|"])) | x <- [0..(s-1)] ]
+        ps = zipWith (++) p2s p1s
+        ls = zipWith (++) ps ss
+
+stringifyTree g t d = strTree g t 0 d
+
+strTree g t l d = concat (take (l*2) (cycle [" ","|"])) 
+  ++ "Player:" ++ playerLabel (player t) ++ "\n" 
+  ++ concat (take (l*2) (cycle [" ","|"])) ++ "attack:" 
+  ++ show (attack t) ++ "\n"
+  ++ concat (take (l*2) (cycle [" ","|"])) ++ "board:\n"
+  ++ paddedStringifyBoard g (board t) (2*l) 
+  ++ concat (take (l*2) (cycle [" ","|"])) 
+  ++ "moves:\n" 
+  ++ concat [strTree g m (l + 1) (d - 1) | m <- moves t]

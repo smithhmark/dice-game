@@ -59,3 +59,16 @@ spec = do
                  2
         `shouldBe`
                  V.fromList [Cell 0 2,Cell 1 3,Cell 0 3,Cell 1 1]
+
+  describe "playerCounts" $ do
+    it "histograms a board by ownership" $ do
+      playerCounts (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1]) []
+        `shouldBe` [(2, 1), (2, 0)] 
+
+  describe "winners" $ do
+    it "builds a list of players with max ownership" $ do
+      winners (V.fromList [Cell 1 1,Cell 1 3,Cell 0 2,Cell 1 1])
+        `shouldBe` [1] 
+    it "builds a list of players with max ownership (tie)" $ do
+      winners (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
+        `shouldBe` [1, 0] 
