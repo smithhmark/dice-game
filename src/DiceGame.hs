@@ -5,6 +5,8 @@ import qualified Data.Vector as V
 import Data.Char (ord, chr)
 import Text.Printf
 
+import System.Random
+import Control.Monad.Random
 type Player = Int
 data Cell = Cell {owner :: Player, dice :: Int} deriving (Show, Eq)
 type Board = Vector Cell
@@ -23,10 +25,28 @@ data GameTree = GameTree { player :: Player
                          } 
                 | Exit deriving (Show, Eq)
 
+type Rnd a = Rand StdGen a
+
 dummyBoard = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 3 ]
 attackTestBoard = V.fromList [Cell 0 3, Cell 0 2, Cell 1 2, Cell 1 3 ]
 attackTestBoard2 = V.fromList [Cell 0 3, Cell 1 2, Cell 1 2, Cell 1 1 ]
 attackTestBoard3 = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 1 ]
+
+randBoard :: GameSetup -> Rnd (Vector Cell)
+randBoard gs = V.replicateM l $ randCell p d
+  where l = boardSize gs * boardSize gs
+        p = playerCnt gs
+        d = maxDice gs
+
+generateBoard :: GameSetup -> IO (Vector Cell)
+generateBoard gs = do
+  evalRandIO $ randBoard gs
+
+randCell :: Int -> Int -> Rnd Cell
+randCell np d = do
+  o <- getRandomR (0, (np - 1)) :: Rnd Int
+  c <- getRandomR (1, d) :: Rnd Int
+  return $ Cell o c
 
 buildTree :: GameSetup -> Board -> Player -> Int -> Bool -> Maybe Attack -> GameTree
 buildTree g brd plyr srdc fm atk =
@@ -183,8 +203,10 @@ paddedStringifyBoard :: GameSetup -> Vector Cell -> Int -> String
 paddedStringifyBoard g b p = concat ls
   where s = boardSize g
         idxs = [ x * s | x <- [0..(s - 1)] ]
-        ss = [ V.foldr (\c a -> stringifyCell c ++ " " ++ a) "\n" $ V.slice x s b | x  <- idxs ]
-        p1s = [ concat $ (take (s - x) $ repeat "  ") | x <- [0..(s - 1)] ]
+        ss = [ V.foldr (\c a -> stringifyCell c ++ " " ++ a) "\n" 
+                $ V.slice x s b 
+                | x  <- idxs ]
+        p1s = [ concat $ (take (s - x) $ repeat "  ") | x <- [0..(s-1)] ]
         p2s = [ concat $ (take (p) (cycle [" ","|"])) | x <- [0..(s-1)] ]
         ps = zipWith (++) p2s p1s
         ls = zipWith (++) ps ss

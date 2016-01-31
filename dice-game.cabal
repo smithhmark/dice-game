@@ -17,6 +17,8 @@ library
   hs-source-dirs:      src
   build-depends:       base >= 4.7 && < 5
                        , vector
+                       , random
+                       , MonadRandom
 executable dice-game
   hs-source-dirs:      app
   main-is:             Main.hs
@@ -24,8 +26,6 @@ executable dice-game
   build-depends:       base >= 4.7 && < 5
                        , dice-game
                        , vector
-                       , random
-                       , MonadRandom
 
 test-suite dice-game-test
   type:                 exitcode-stdio-1.0
