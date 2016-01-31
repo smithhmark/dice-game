@@ -34,4 +34,5 @@ test-suite dice-game-test
   build-depends:        base
                       , hspec
                       , dice-game
+                      , vector
 
