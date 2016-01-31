@@ -1,5 +1,5 @@
 module Main where
-
+import System.IO
 import Data.Vector (Vector, cons, (!), (!?), (//))
 import qualified Data.Vector as V
 import System.Random
@@ -37,11 +37,28 @@ main = do
   --brd <- evalRandIO $ randBoard 4 2 3
   --print brd
   --putStr $ stringifyBoard 2 brd
-  let silly = V.fromList [Cell 0 1,Cell 1 1,Cell 0 2, Cell 1 1]
-  let gs = GameSetup 2 2 3
-  let tree = buildTree gs silly 0 0 True Nothing
+  putStr "How big a board do you want? "
+  hFlush stdout
+  sizeS <- getLine
+  putStr "What should the maximum dice on a cell be? "
+  hFlush stdout
+  diceS <- getLine
+  putStrLn "Currently we are limiting to 2 players"
+  hFlush stdout
+  let sz = read sizeS
+      d = read diceS
+      p = 2
+      gs = GameSetup sz p d
+  brd <- evalRandIO $ randBoard (sz*sz) p d
+
+  let startingTree = buildTree gs brd 0 0 True Nothing
+  playVsHuman gs startingTree
+
+  --let silly = V.fromList [Cell 0 1,Cell 1 1,Cell 0 2, Cell 1 1]
+  --let gs = GameSetup 2 2 3
+  --let tree = buildTree gs silly 0 0 True Nothing
   --print tree
-  putStr $ stringifyTree gs tree 4
+  --putStr $ stringifyTree gs tree 4
   --print "dummyBoard:"
   --putStr . stringifyBoard gs $ dummyBoard
   --print "attackTestBoard:"
