@@ -82,6 +82,16 @@ attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
         val = winnable p b pts 
 
 addAttackingMoves :: GameSetup -> Board -> Player -> Int -> [GameTree]
-addAttackingMoves g b p sprd = undefined
+addAttackingMoves g b p sprd = gts
   where ats = attacks g b p
+        dice1 = map (\(s, _)-> diceAt s b) ats
+        dice2 = map (\(_, d)-> diceAt d b) ats
+        zd = zip3 ats dice1 dice2
+        gts = [buildTree g (attackBoard b p a ds) p (sprd + dd) False | 
+               (a, ds, dd) <- zd]
+
+attackBoard :: Board -> Player -> (Int, Int) -> Int -> Board
+attackBoard b p (src,dst) d = b // [sc, dc]
+  where sc = (src, Cell p 1)
+        dc = (dst, Cell p (d - 1))
 
