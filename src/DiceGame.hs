@@ -20,7 +20,8 @@ data GameTree = GameTree { player :: Player
                          , board :: Board
                          , attack :: Maybe Attack
                          , moves :: [GameTree]
-                         } deriving (Show, Eq)
+                         } 
+                | Exit deriving (Show, Eq)
 
 dummyBoard = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 3 ]
 attackTestBoard = V.fromList [Cell 0 3, Cell 0 2, Cell 1 2, Cell 1 3 ]
@@ -29,7 +30,8 @@ attackTestBoard3 = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 1 ]
 
 buildTree :: GameSetup -> Board -> Player -> Int -> Bool -> Maybe Attack -> GameTree
 buildTree g brd plyr srdc fm atk =
-  GameTree plyr brd atk $ addPassingMoves g brd plyr srdc fm $ addAttackingMoves g brd plyr srdc
+  GameTree plyr brd atk $ addPassingMoves g brd plyr srdc fm $
+    addAttackingMoves g brd plyr srdc
 
 nxtPlyr :: Player -> GameSetup -> Player
 nxtPlyr p g = mod (p + 1) $ playerCnt g
@@ -51,9 +53,8 @@ addNewDice g b p d =
   where pcs = playerCells g b p
         haveRoom = filter (\i-> maxDice g > diceAt i b) pcs
         spots = length haveRoom
-        uB d (i:is) = (i, Cell p (diceAt i b + 1)):uB (d-1) is
         uB 0 _ = []
-        uB _ [] = []
+        uB d (i:is) = (i, Cell p (diceAt i b + 1)):uB (d-1) is
         updates = uB d haveRoom
 
 playerAt :: Int -> Board -> Player
@@ -102,7 +103,8 @@ addAttackingMoves g b p sprd = gts
         dice1 = map (\(s, _)-> diceAt s b) ats
         dice2 = map (\(_, d)-> diceAt d b) ats
         zd = zip3 ats dice1 dice2
-        gts = [buildTree g (attackBoard b p a ds) p (sprd + dd) False $ Just a | 
+        gts = [
+          buildTree g (attackBoard b p a ds) p (sprd + dd) False $ Just a | 
                (a, ds, dd) <- zd]
 
 attackBoard :: Board -> Player -> (Int, Int) -> Int -> Board
@@ -127,8 +129,11 @@ announceWinner b = do
 formatMoveOpt :: Int -> GameTree -> String
 formatMoveOpt i (GameTree p b Nothing m) = printf "%d end turn" i
 formatMoveOpt i (GameTree p b (Just (s,d)) m) = printf "%d  %d -> %d" i s d
+formatMoveOpt i Exit = "Exited"
 
 handleHuman :: GameTree -> IO GameTree
+handleHuman Exit = do
+  return Exit
 handleHuman t = do
   putStrLn ""
   putStrLn "choose your move:"
@@ -136,8 +141,12 @@ handleHuman t = do
       descs = [formatMoveOpt i (moves t !! i) | i <- [0..(moveCount-1)]]
   mapM putStrLn descs
   opt <- getLine
-  let i = read opt :: Int
-  return $ (moves t) !! i
+  case opt of "Q" -> return Exit
+              "q" -> return Exit
+              "quit" -> return Exit
+              _ -> do
+                let i = read opt :: Int
+                return $ (moves t) !! i
 
 playerCounts :: Board -> [(Int, Player)] -> [(Int, Player)]
 playerCounts b ws = case lo of 0 -> (lp, p):ws
@@ -153,6 +162,8 @@ winners b = map snd $ filter (\c-> fst c == mx) cnts
         mx = foldl (\a (c, _p)-> if c > a then c else a) 0 cnts
 
 playVsHuman :: GameSetup -> GameTree -> IO ()
+playVsHuman g Exit = do
+  putStrLn "Thanks for playing!"
 playVsHuman g t = do
   printInfo g t
   case length (moves t) of 0 -> announceWinner $ board t
