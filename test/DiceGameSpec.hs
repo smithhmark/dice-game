@@ -59,6 +59,13 @@ spec = do
                  2
         `shouldBe`
                  V.fromList [Cell 0 2,Cell 1 3,Cell 0 3,Cell 1 1]
+    it "adds dice to open cells, but not too many" $ do
+      addNewDice (GameSetup 2 2 3) 
+                 (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
+                 0
+                 1
+        `shouldBe`
+                 V.fromList [Cell 0 2,Cell 1 3,Cell 0 2,Cell 1 1]
 
   describe "playerCounts" $ do
     it "histograms a board by ownership" $ do
