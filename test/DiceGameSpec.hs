@@ -52,20 +52,22 @@ spec = do
       attacks (GameSetup 2 2 3) attackTestBoard2 1 `shouldBe` []
 
   describe "addNewDice" $ do
-    it "adds dice to open cells" $ do
-      addNewDice (GameSetup 2 2 3) 
-                 (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
-                 0
-                 2
-        `shouldBe`
-                 V.fromList [Cell 0 2,Cell 1 3,Cell 0 3,Cell 1 1]
-    it "adds dice to open cells, but not too many" $ do
-      addNewDice (GameSetup 2 2 3) 
-                 (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
-                 0
-                 1
-        `shouldBe`
-                 V.fromList [Cell 0 2,Cell 1 3,Cell 0 2,Cell 1 1]
+    context "where there are fewer dice than open cells" $ do
+      it "adds dice to open cells" $ do
+        addNewDice (GameSetup 2 2 3) 
+                   (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
+                   0
+                   2
+          `shouldBe`
+                   V.fromList [Cell 0 2,Cell 1 3,Cell 0 3,Cell 1 1]
+    context "where there are more dice than open cells" $ do
+      it "adds dice to open cells, but not too many" $ do
+        addNewDice (GameSetup 2 2 3) 
+                   (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
+                   0
+                   1
+          `shouldBe`
+                   V.fromList [Cell 0 2,Cell 1 3,Cell 0 2,Cell 1 1]
 
   describe "playerCounts" $ do
     it "histograms a board by ownership" $ do
@@ -79,3 +81,34 @@ spec = do
     it "builds a list of players with max ownership (tie)" $ do
       winners (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
         `shouldBe` [1, 0] 
+
+  describe "ratePosition" $ do
+    context "total victory" $ do
+      let b = V.fromList [Cell 0 1, Cell 0 1, Cell 0 1, Cell 0 1]
+          zerosTurn = GameTree 0 b Nothing []
+          onesTurn = GameTree 1 b Nothing []
+      context "player 0's turn:" $ do
+        it "should handle total victory" $ do
+            ratePosition zerosTurn 0 `shouldBe` 1.0
+        it "should detect total loss" $ do
+            ratePosition onesTurn 1 `shouldBe` 0.0
+      context "player 1's turn:" $ do
+        it "should handle total victory" $ do
+            ratePosition zerosTurn 0 `shouldBe` 1.0
+        it "should detect total loss" $ do
+            ratePosition onesTurn 1 `shouldBe` 0.0
+    context "tie" $ do
+      let b = V.fromList [Cell 0 1, Cell 0 1, Cell 1 1, Cell 1 1]
+          turn = GameTree 0 b Nothing []
+      it "should detect a tie" $ do
+        ratePosition turn 0 `shouldBe` 0.5
+    context "could win in one move" $ do
+      let wBoard = V.fromList [Cell 0 1, Cell 0 1, Cell 0 1, Cell 1 1]
+          tBoard = V.fromList [Cell 0 2, Cell 1 1, Cell 0 1, Cell 1 1]
+          passGame = GameTree 1 tBoard Nothing []
+          winGame = GameTree 0 wBoard (Just (0, 1)) []
+          now = GameTree 0 tBoard Nothing [winGame, passGame]
+      it "should rate this position as a win for player 0" $ do 
+        ratePosition now 0 `shouldBe` 1.0
+      it "should rate this position as a loss for player 1" $ do 
+        ratePosition now 1 `shouldBe` 0.0

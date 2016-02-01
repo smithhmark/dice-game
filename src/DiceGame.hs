@@ -222,3 +222,15 @@ strTree g t l d = concat (take (l*2) (cycle [" ","|"]))
   ++ concat (take (l*2) (cycle [" ","|"])) 
   ++ "moves:\n" 
   ++ concat [strTree g m (l + 1) (d - 1) | m <- moves t]
+
+getRatings :: GameTree -> Player -> [Float]
+getRatings t p = map (\m-> ratePosition m p) $ moves t
+
+ratePosition :: GameTree -> Player -> Float
+ratePosition (GameTree _ b _ []) p = if p `elem` w 
+                                     then 1.0 / (fromIntegral $ length w)
+                                     else 0.0
+  where w = winners b
+ratePosition t@(GameTree cp _ _ _) p = f ( getRatings t p)
+  where f = case p == cp of True -> (maximum) 
+                            False -> (minimum)
