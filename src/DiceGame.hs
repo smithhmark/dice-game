@@ -234,3 +234,20 @@ ratePosition (GameTree _ b _ []) p = if p `elem` w
 ratePosition t@(GameTree cp _ _ _) p = f ( getRatings t p)
   where f = case p == cp of True -> (maximum) 
                             False -> (minimum)
+
+handleComputer :: GameTree -> GameTree
+handleComputer t@(GameTree p _ _ ms) = head $ 
+  dropWhile (\m->ratePosition m p < mx ) ms
+  where rs = getRatings t $ player t
+        mx = maximum rs
+
+playVsComputer :: GameSetup -> GameTree -> IO ()
+playVsComputer g t@(GameTree _ _ _ []) = do
+  printInfo g t
+  announceWinner $ board t
+playVsComputer g t = do
+  printInfo g t
+  case player t of 0 -> do
+                     mv <- handleHuman t 
+                     playVsComputer g mv
+                   _ -> playVsComputer g $ handleComputer t
