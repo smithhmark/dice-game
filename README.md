@@ -9,6 +9,7 @@ The "Land of Lisp" book has a great extended example of building a dice game fro
 | Getting stack to know about my tests | modifying .cabal file | [this sample project by Taylor Fausak was really helpful](http://taylor.fausak.me/2014/03/04/haskeleton-a-haskell-project-skeleton/) |
 | Getting random numbers to build boards|  | UPenn CIS194 homework was super helpful [Here](http://www.seas.upenn.edu/~cis194/hw/07-monads.pdf) |
 | My User prompts aren't showing up when I think they should(stdout buffering)| flushing stdout with hFlush from System.IO| [this SO question](http://stackoverflow.com/questions/13190314/haskell-do-monad-io-happens-out-of-order) |
+| fixtures would improve the readability of my tests  | using context and let in tests | http://www.codewars.com/docs/haskell-test-reference  |
 |  |  |  |
 
 ## other sources
