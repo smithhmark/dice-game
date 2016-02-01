@@ -16,17 +16,30 @@ main = do
   putStr "What should the maximum dice on a cell be? "
   hFlush stdout
   diceS <- getLine
-  putStrLn "How many players?"
+  putStrLn "playing against the computer?"
   hFlush stdout
-  playerS <- getLine
-  let sz = read sizeS :: Int
-      d = read diceS :: Int
-      p = read playerS :: Int
-      gs = GameSetup p sz d
-      l = sz * sz
-  putStr $ "Creating a board that has " ++ show l ++ " cells with " ++ show p
-    ++ " players and up to " ++ show d ++ " dice per cell\n"
-  brd <- generateBoard gs
+  cpuS <- getLine
+  case cpuS of "y" -> do 
+                 let sz = read sizeS :: Int
+                     d = read diceS :: Int
+                     gs = GameSetup 2 sz d
+                     l = sz * sz
+                 brd <- generateBoard gs
+                 let startingTree = buildTree gs brd 0 0 True Nothing
+                 playVsComputer gs startingTree
+               _ -> do
+                 putStrLn "How many players?"
+                 hFlush stdout
+                 playerS <- getLine
+                 let sz = read sizeS :: Int
+                     d = read diceS :: Int
+                     p = read playerS :: Int
+                     gs = GameSetup p sz d
+                     l = sz * sz
+                 putStr $ "Creating a board that has " ++ show l 
+                   ++ " cells with " ++ show p
+                   ++ " players and up to " ++ show d ++ " dice per cell\n"
+                 brd <- generateBoard gs
 
-  let startingTree = buildTree gs brd 0 0 True Nothing
-  playVsHuman gs startingTree
+                 let startingTree = buildTree gs brd 0 0 True Nothing
+                 playVsHuman gs startingTree
