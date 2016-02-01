@@ -70,9 +70,12 @@ spec = do
                    V.fromList [Cell 0 2,Cell 1 3,Cell 0 2,Cell 1 1]
 
   describe "playerCounts" $ do
-    it "histograms a board by ownership" $ do
-      playerCounts (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1]) []
-        `shouldBe` [(2, 1), (2, 0)] 
+    let t = V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1]
+        v = V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 0 1]
+    it "finds the tie" $ do
+      playerCounts t [] `shouldBe` [(2, 1), (2, 0)] 
+    it "finds player 0 has the edge" $ do
+      playerCounts v [] `shouldBe` [(1, 1), (3, 0)] 
 
   describe "winners" $ do
     it "builds a list of players with max ownership" $ do
