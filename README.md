@@ -12,5 +12,7 @@ The "Land of Lisp" book has a great extended example of building a dice game fro
 |  |  |  |
 
 ## other sources
- 1. http://seanhess.github.io/2015/08/18/practical-haskell-using-monads.html
- 2. 
+ 1. monad reminders, http://seanhess.github.io/2015/08/18/practical-haskell-using-monads.html
+ 2. randomness help and monadic thinking: https://mail.haskell.org/pipermail/beginners/2010-December/005957.html
+ 3. test setup: http://stackoverflow.com/questions/20331209/haskell-unit-testing
+ 4. 
