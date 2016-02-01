@@ -242,6 +242,8 @@ handleComputer t@(GameTree p _ _ ms) = head $
         mx = maximum rs
 
 playVsComputer :: GameSetup -> GameTree -> IO ()
+playVsComputer g Exit = do
+  putStrLn "Thanks for playing"
 playVsComputer g t@(GameTree _ _ _ []) = do
   printInfo g t
   announceWinner $ board t
