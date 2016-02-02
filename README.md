@@ -20,8 +20,8 @@ The "Land of Lisp" book has a great extended example of building a dice game fro
  4. help getting profiling information: http://stackoverflow.com/questions/32123475/profiling-builds-with-stack
  5.
 
- ## the compiler command I used to profile is:
- ```bash
+## the compiler command I used to profile is:
+```bash
 $ stack install --enable-executable-profiling --enable-library-profiling --ghc-options="-O2 -rtsopts -auto-all" dice-game:stress
 $ time ~/.local/bin/stress +RTS -p
  ```
