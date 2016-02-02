@@ -25,9 +25,9 @@ spec = do
 
   describe "playerCells" $ do
     it "finds cells owned by a player(dummyBoard)" $ do
-      playerCells (GameSetup 2 2 3) dummyBoard 0 `shouldBe` [0, 1]
+      playerCells dummyBoard 0 `shouldBe` [0, 1]
     it "finds cells owned by a player(attackTestBoard3)" $ do
-      playerCells (GameSetup 2 2 3) dummyBoard 0 `shouldBe` [0, 1]
+      playerCells dummyBoard 0 `shouldBe` [0, 1]
 
   describe "potentialTargets" $ do
     it "prevents attacking ones self" $ do
@@ -36,10 +36,10 @@ spec = do
 
   describe "winnable" $ do
     it "stripout attacks that cant win" $ do
-      winnable 0 attackTestBoard3 [(0, [2, 3]), (1,[3])] `shouldBe` 
+      winnable attackTestBoard3 [(0, [2, 3]), (1,[3])] `shouldBe` 
         [(0,[3]), (1, [3])]
     it "handels none" $ do
-      winnable 0 dummyBoard [(0, [2, 3]), (1,[3])] `shouldBe` 
+      winnable dummyBoard [(0, [2, 3]), (1,[3])] `shouldBe` 
         [(0,[]), (1, [])]
 
   describe "attacks" $ do

@@ -1,6 +1,6 @@
 module DiceGame where
 
-import Data.Vector (Vector, cons, (!), (!?), (//))
+import Data.Vector (Vector, (!), (//))
 import qualified Data.Vector as V
 import Data.Char (ord, chr)
 import Text.Printf
@@ -27,9 +27,13 @@ data GameTree = GameTree { player :: Player
 
 type Rnd a = Rand StdGen a
 
+dummyBoard :: Board
 dummyBoard = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 3 ]
+attackTestBoard :: Board
 attackTestBoard = V.fromList [Cell 0 3, Cell 0 2, Cell 1 2, Cell 1 3 ]
+attackTestBoard2 :: Board
 attackTestBoard2 = V.fromList [Cell 0 3, Cell 1 2, Cell 1 2, Cell 1 1 ]
+attackTestBoard3:: Board
 attackTestBoard3 = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 1 ]
 
 randBoard :: GameSetup -> Rnd (Vector Cell)
@@ -57,7 +61,7 @@ nxtPlyr :: Player -> GameSetup -> Player
 nxtPlyr p g = mod (p + 1) $ playerCnt g
 
 addPassingMoves :: GameSetup -> Board -> Player -> Int -> Bool -> [GameTree] -> [GameTree]
-addPassingMoves g brd plyr srdc True mvs = mvs
+addPassingMoves _ _ _ _ True mvs = mvs
 addPassingMoves g brd plyr srdc False mvs = 
    (buildTree g 
              (addNewDice g brd plyr (srdc - 1)) 
@@ -67,14 +71,15 @@ addPassingMoves g brd plyr srdc False mvs =
              Nothing) : mvs
 
 addNewDice :: GameSetup -> Board -> Player -> Int -> Board
-addNewDice g b p d = 
+addNewDice gs b p d = 
   case d > spots of True -> undefined
                     False -> b // updates
-  where pcs = playerCells g b p
-        haveRoom = filter (\i-> maxDice g > diceAt i b) pcs
+  where pcs = playerCells b p
+        haveRoom = filter (\i-> maxDice gs > diceAt i b) pcs
         spots = length haveRoom
         uB 0 _ = []
-        uB d (i:is) = (i, Cell p (diceAt i b + 1)):uB (d-1) is
+        uB _ [] = []
+        uB rd (i:is) = (i, Cell p (diceAt i b + 1)):uB (rd-1) is
         updates = uB d haveRoom
 
 playerAt :: Int -> Board -> Player
@@ -100,22 +105,22 @@ neighbors g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g2, g3]
         g3 = case rightEdgeP of False -> [pos + 1, down, down + 1]
                                 True -> [down]
 
-playerCells:: GameSetup -> Board -> Player -> [Int]
-playerCells g b p = V.toList $ V.findIndices (ownedByP p) b
+playerCells:: Board -> Player -> [Int]
+playerCells b p = V.toList $ V.findIndices (ownedByP p) b
 
 potentialTargets :: Player -> Board -> [Int] -> [[Int]] -> [(Int, [Int])]
 potentialTargets p b srcs ns = zip srcs enemies
   where enemies = map (filter (\x-> not (ownedByP p (b ! x)))) ns
 
-winnable :: Player -> Board -> [(Int, [Int])] -> [(Int, [Int])]
-winnable p b pts = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds)) pts 
+winnable :: Board -> [(Int, [Int])] -> [(Int, [Int])]
+winnable b pts = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds)) pts 
 
 attacks :: GameSetup -> Board -> Player -> [ (Int, Int) ]
 attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
-  where srcs = playerCells g b p
+  where srcs = playerCells b p
         ns = map (neighbors g b) srcs
         pts = potentialTargets p b srcs ns
-        val = winnable p b pts 
+        val = winnable b pts 
 
 addAttackingMoves :: GameSetup -> Board -> Player -> Int -> [GameTree]
 addAttackingMoves g b p sprd = gts
@@ -147,9 +152,9 @@ announceWinner b = do
                    _ -> putStrLn $ "The game is a tie between:" ++ show w
 
 formatMoveOpt :: Int -> GameTree -> String
-formatMoveOpt i (GameTree p b Nothing m) = printf "%d end turn" i
-formatMoveOpt i (GameTree p b (Just (s,d)) m) = printf "%d  %d -> %d" i s d
-formatMoveOpt i Exit = "Exited"
+formatMoveOpt i (GameTree _ _ Nothing _) = printf "%d end turn" i
+formatMoveOpt i (GameTree _ _ (Just (s,d)) _) = printf "%d  %d -> %d" i s d
+formatMoveOpt _ Exit = "Exited"
 
 handleHuman :: GameTree -> IO GameTree
 handleHuman Exit = do
@@ -159,7 +164,7 @@ handleHuman t = do
   putStrLn "choose your move:"
   let moveCount = length $ moves t
       descs = [formatMoveOpt i (moves t !! i) | i <- [0..(moveCount-1)]]
-  mapM putStrLn descs
+  _ <- mapM putStrLn descs
   opt <- getLine
   case opt of "Q" -> return Exit
               "q" -> return Exit
@@ -182,15 +187,16 @@ winners b = map snd $ filter (\c-> fst c == mx) cnts
         mx = foldl (\a (c, _p)-> if c > a then c else a) 0 cnts
 
 playVsHuman :: GameSetup -> GameTree -> IO ()
-playVsHuman g Exit = do
+playVsHuman _ Exit = do
   putStrLn "Thanks for playing!"
 playVsHuman g t = do
   printInfo g t
   case length (moves t) of 0 -> announceWinner $ board t
                            _ -> do 
-                             board <- handleHuman t
-                             playVsHuman g board
+                             brd <- handleHuman t
+                             playVsHuman g brd
 
+playerLabel :: Player -> String
 playerLabel p = [chr (p + ord 'a')]
 
 stringifyCell :: Cell -> String
@@ -207,12 +213,15 @@ paddedStringifyBoard g b p = concat ls
                 $ V.slice x s b 
                 | x  <- idxs ]
         p1s = [ concat $ (take (s - x) $ repeat "  ") | x <- [0..(s-1)] ]
-        p2s = [ concat $ (take (p) (cycle [" ","|"])) | x <- [0..(s-1)] ]
+        p2s = [ concat $ (take (p) (cycle [" ","|"])) | _ <- [0..(s-1)] ]
         ps = zipWith (++) p2s p1s
         ls = zipWith (++) ps ss
 
+
+stringifyTree :: GameSetup -> GameTree -> Int -> String
 stringifyTree g t d = strTree g t 0 d
 
+strTree :: GameSetup -> GameTree -> Int -> Int -> String
 strTree g t l d = concat (take (l*2) (cycle [" ","|"])) 
   ++ "Player:" ++ playerLabel (player t) ++ "\n" 
   ++ concat (take (l*2) (cycle [" ","|"])) ++ "attack:" 
@@ -227,6 +236,7 @@ getRatings :: GameTree -> Player -> [Float]
 getRatings t p = map (\m-> ratePosition m p) $ moves t
 
 ratePosition :: GameTree -> Player -> Float
+ratePosition Exit _ = 0.0
 ratePosition (GameTree _ b _ []) p = if p `elem` w 
                                      then 1.0 / (fromIntegral $ length w)
                                      else 0.0
@@ -237,12 +247,13 @@ ratePosition t@(GameTree cp _ _ _) p = f ( getRatings t p)
 
 handleComputer :: GameTree -> GameTree
 handleComputer t@(GameTree p _ _ ms) = head $ 
-  dropWhile (\m->ratePosition m p < mx ) ms
+    dropWhile (\m->ratePosition m p < mx ) ms
   where rs = getRatings t $ player t
         mx = maximum rs
+handleComputer Exit = Exit
 
 playVsComputer :: GameSetup -> GameTree -> IO ()
-playVsComputer g Exit = do
+playVsComputer _ Exit = do
   putStrLn "Thanks for playing"
 playVsComputer g t@(GameTree _ _ _ []) = do
   printInfo g t

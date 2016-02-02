@@ -1,12 +1,7 @@
 module Main where
 import System.IO
-import Data.Vector (Vector, cons, (!), (!?), (//))
-import qualified Data.Vector as V
-import Data.Char (ord, chr)
-import Text.Printf
 
 import DiceGame
-
 
 main :: IO ()
 main = do
@@ -23,7 +18,6 @@ main = do
                  let sz = read sizeS :: Int
                      d = read diceS :: Int
                      gs = GameSetup 2 sz d
-                     l = sz * sz
                  brd <- generateBoard gs
                  let startingTree = buildTree gs brd 0 0 True Nothing
                  playVsComputer gs startingTree
