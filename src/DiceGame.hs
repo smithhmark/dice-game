@@ -264,3 +264,11 @@ playVsComputer g t = do
                      mv <- handleHuman t 
                      playVsComputer g mv
                    _ -> playVsComputer g $ handleComputer t
+
+cpuVsCpu :: GameSetup -> GameTree -> IO ()
+cpuVsCpu _ Exit = do
+  putStrLn "Thanks for playing"
+cpuVsCpu g t@(GameTree _ _ _ []) = do
+  announceWinner $ board t
+cpuVsCpu g t = do
+  cpuVsCpu g $ handleComputer t

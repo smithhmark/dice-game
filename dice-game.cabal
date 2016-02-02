@@ -15,10 +15,12 @@ cabal-version:       >=1.10
 library
   exposed-modules:     DiceGame
   hs-source-dirs:      src
+  default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                        , vector
                        , random
                        , MonadRandom
+
 executable dice-game
   hs-source-dirs:      app
   main-is:             Main.hs
@@ -27,12 +29,20 @@ executable dice-game
                        , dice-game
                        , vector
 
+executable stress
+  hs-source-dirs:      stresser
+  main-is:             Main.hs
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
+                       , dice-game
+
 test-suite dice-game-test
-  type:                 exitcode-stdio-1.0
-  hs-source-dirs:       test
-  main-is:              Spec.hs
-  build-depends:        base
-                      , hspec
-                      , dice-game
-                      , vector
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  default-language:    Haskell2010
+  build-depends:       base
+                     , hspec
+                     , dice-game
+                     , vector
 
