@@ -58,7 +58,7 @@ buildTree g brd plyr srdc fm atk =
     addAttackingMoves g brd plyr srdc
 
 nxtPlyr :: Player -> GameSetup -> Player
-nxtPlyr p g = mod (p + 1) $ playerCnt g
+nxtPlyr p g = rem (p + 1) $ playerCnt g
 
 addPassingMoves :: GameSetup -> Board -> Player -> Int -> Bool -> [GameTree] -> [GameTree]
 addPassingMoves _ _ _ _ True mvs = mvs
@@ -96,9 +96,9 @@ neighbors g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g2, g3]
   where sz = boardSize g
         up = pos - sz
         down = pos + sz
-        leftEdgeP = case pos `mod` sz of 0 -> True
+        leftEdgeP = case pos `rem` sz of 0 -> True
                                          _ -> False
-        rightEdgeP = case (pos + 1) `mod` sz of 0 -> True
+        rightEdgeP = case (pos + 1) `rem` sz of 0 -> True
                                                 _ -> False
         g2 = case leftEdgeP of False -> [up -1, up, pos -1]
                                True -> [up]
