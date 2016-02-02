@@ -22,5 +22,6 @@ The "Land of Lisp" book has a great extended example of building a dice game fro
 
  ## the compiler command I used to profile is:
  ```bash
-$ stack install --enable-executable-profiling --enable-library-profiling --ghc-options="-O2 -rtsopts -auto-all" 
+$ stack install --enable-executable-profiling --enable-library-profiling --ghc-options="-O2 -rtsopts -auto-all" dice-game:stress
+$ time ~/.local/bin/stress +RTS -p
  ```
