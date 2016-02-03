@@ -81,12 +81,10 @@ addNewDice gs b p d =
   case d > spots of True -> undefined
                     False -> b // updates
   where pcs = playerCells b p
-        haveRoom = filter (\i-> maxDice gs > diceAt i b) pcs
+        haveRoom = filter (\i-> diceAt i b < maxDice gs) pcs
         spots = length haveRoom
-        uB 0 _ = []
-        uB _ [] = []
-        uB rd (i:is) = (i, Cell p (diceAt i b + 1)):uB (rd-1) is
-        updates = uB d haveRoom
+        updates = foldr (\i a-> (i, Cell p (diceAt i b + 1)):a) [] 
+          $ take d haveRoom
 
 playerAt :: Int -> Board -> Player
 playerAt pos brd = owner $ brd ! pos
