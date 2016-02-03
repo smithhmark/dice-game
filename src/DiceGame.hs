@@ -4,9 +4,9 @@ import Data.Vector (Vector, (!), (//))
 import qualified Data.Vector as V
 import Data.Char (ord, chr)
 import Text.Printf
-
 import System.Random
 import Control.Monad.Random
+
 type Player = Int
 data Cell = Cell {owner :: Player, dice :: Int} deriving (Show, Eq)
 type Board = Vector Cell
@@ -125,9 +125,8 @@ winnable b pts = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds)) p
 attacks :: GameSetup -> Board -> Player -> [ (Int, Int) ]
 attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
   where srcs = playerCells b p
-        ns = map (neighborF g) srcs
-        pts = potentialTargets p b srcs ns
-        val = winnable b pts 
+        nes = map (removeFriendlies p b . neighborF g) srcs
+        val = winnable b $ zip srcs nes
 
 addAttackingMoves :: GameSetup -> Board -> Player -> Int -> [GameTree]
 addAttackingMoves g b p sprd = gts
