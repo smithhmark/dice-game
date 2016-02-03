@@ -92,7 +92,12 @@ ownedByP :: Player -> Cell -> Bool
 ownedByP p c = p == owner c
 
 neighbors :: GameSetup -> Board -> Int -> [Int]
-neighbors g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g2, g3]
+neighbors gs b pos = n pos
+  where ns = V.fromList [neighbors_slow gs b p | p <- [0..(V.length b - 1)] ]
+        n = (ns !)
+
+neighbors_slow :: GameSetup -> Board -> Int -> [Int]
+neighbors_slow g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g2, g3]
   where sz = boardSize g
         up = pos - sz
         down = pos + sz
