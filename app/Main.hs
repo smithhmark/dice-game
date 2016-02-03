@@ -17,7 +17,7 @@ main = do
   case cpuS of "y" -> do 
                  let sz = read sizeS :: Int
                      d = read diceS :: Int
-                     gs = GameSetup 2 sz d
+                     gs = buildGS 2 sz d
                  brd <- generateBoard gs
                  let startingTree = buildTree gs brd 0 0 True Nothing
                  playVsComputer gs startingTree
@@ -28,7 +28,7 @@ main = do
                  let sz = read sizeS :: Int
                      d = read diceS :: Int
                      p = read playerS :: Int
-                     gs = GameSetup p sz d
+                     gs = buildGS p sz d
                      l = sz * sz
                  putStr $ "Creating a board that has " ++ show l 
                    ++ " cells with " ++ show p

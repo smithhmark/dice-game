@@ -16,7 +16,8 @@ type Attack = (Int, Int)
 data GameSetup = GameSetup { playerCnt :: Int
                            , boardSize :: Int
                            , maxDice :: Int
-                           } deriving (Show)
+                           , neighborF :: (Int -> [Int])
+                           }-- deriving (Show)
 
 data GameTree = GameTree { player :: Player
                          , board :: Board
@@ -24,6 +25,11 @@ data GameTree = GameTree { player :: Player
                          , moves :: [GameTree]
                          } 
                 | Exit deriving (Show, Eq)
+
+buildGS :: Int -> Int -> Int -> GameSetup
+buildGS ps sz md = GameSetup ps sz md f
+  where table = V.fromList [ neighbors sz x | x <- [0..(sz*sz-1)]]
+        f = \x-> table ! x
 
 type Rnd a = Rand StdGen a
 
@@ -91,14 +97,9 @@ diceAt pos brd = dice $ brd ! pos
 ownedByP :: Player -> Cell -> Bool
 ownedByP p c = p == owner c
 
-neighbors :: GameSetup -> Board -> Int -> [Int]
-neighbors gs b pos = n pos
-  where ns = V.fromList [neighbors_slow gs b p | p <- [0..(V.length b - 1)] ]
-        n = (ns !)
-
-neighbors_slow :: GameSetup -> Board -> Int -> [Int]
-neighbors_slow g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g2, g3]
-  where sz = boardSize g
+neighbors :: Int -> Int -> [Int]
+neighbors sz pos = filter (>= 0) . filter (< ml) $ concat [g2, g3]
+  where ml = sz * sz
         up = pos - sz
         down = pos + sz
         leftEdgeP = case pos `rem` sz of 0 -> True
@@ -113,9 +114,12 @@ neighbors_slow g brd pos = filter (>= 0) . filter (< V.length brd) $ concat [g2,
 playerCells:: Board -> Player -> [Int]
 playerCells b p = V.toList $ V.findIndices (ownedByP p) b
 
+removeFriendlies :: Player -> Board -> [Int] -> [Int]
+removeFriendlies p b = filter (\x -> not (ownedByP p (b ! x)))
+
 potentialTargets :: Player -> Board -> [Int] -> [[Int]] -> [(Int, [Int])]
 potentialTargets p b srcs ns = zip srcs enemies
-  where enemies = map (filter (\x-> not (ownedByP p (b ! x)))) ns
+  where enemies = map (removeFriendlies p b) ns
 
 winnable :: Board -> [(Int, [Int])] -> [(Int, [Int])]
 winnable b pts = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds)) pts 
@@ -123,7 +127,7 @@ winnable b pts = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds)) p
 attacks :: GameSetup -> Board -> Player -> [ (Int, Int) ]
 attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
   where srcs = playerCells b p
-        ns = map (neighbors g b) srcs
+        ns = map (neighborF g) srcs
         pts = potentialTargets p b srcs ns
         val = winnable b pts 
 
