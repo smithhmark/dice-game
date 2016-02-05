@@ -6,6 +6,7 @@ import Data.Char (ord, chr)
 import Text.Printf
 import System.Random
 import Control.Monad.Random
+import Data.MemoTrie
 
 type Player = Int
 data Cell = Cell {owner :: Player, dice :: Int} deriving (Show, Eq)
@@ -58,9 +59,11 @@ randCell np d = do
   c <- getRandomR (1, d) :: Rnd Int
   return $ Cell o c
 
+mGT = memo GameTree
+
 buildTree :: GameSetup -> Board -> Player -> Int -> Bool -> Maybe Attack -> GameTree
 buildTree g brd plyr srdc fm atk =
-  GameTree plyr brd atk $ addPassingMoves g brd plyr srdc fm $
+  mGT plyr brd atk $ addPassingMoves g brd plyr srdc fm $
     addAttackingMoves g brd plyr srdc
 
 nxtPlyr :: Player -> GameSetup -> Player
@@ -120,7 +123,7 @@ potentialTargets p b srcs ns = zip srcs enemies
   where enemies = map (removeFriendlies p b) ns
 
 winnable :: Board -> [(Int, [Int])] -> [(Int, [Int])]
-winnable b pts = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds)) pts 
+winnable b = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds))
 
 attacks :: GameSetup -> Board -> Player -> [ (Int, Int) ]
 attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val

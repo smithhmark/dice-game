@@ -20,6 +20,7 @@ library
                        , vector
                        , random
                        , MonadRandom
+                       , MemoTrie
 
 executable dice-game
   hs-source-dirs:      app
