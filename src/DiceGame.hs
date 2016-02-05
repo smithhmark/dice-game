@@ -8,10 +8,17 @@ import System.Random
 import Control.Monad.Random
 import Data.MemoTrie
 
+-- | Players are really Ints, but makes the type sigs more helpful
 type Player = Int
-data Cell = Cell {owner :: Player, dice :: Int} deriving (Show, Eq)
+
+data Cell = Cell { owner :: Player
+                 , dice :: Int
+                 } deriving (Show, Eq)
 type Board = Vector Cell
 
+-- | the Attack type represents one player attacking another
+-- the first number is the Vector index of the cell launching the attack
+-- the second is the Vector index of the cell being attacked
 type Attack = (Int, Int)
 
 data GameSetup = GameSetup { playerCnt :: Int
@@ -33,6 +40,7 @@ buildGS ps sz md = GameSetup ps sz md 4 f
   where table = V.fromList [ neighbors sz x | x <- [0..(sz*sz-1)]]
         f = \x-> table ! x
 
+-- | This type makes generating random boards slightly cleaner
 type Rnd a = Rand StdGen a
 
 dummyBoard :: Board
@@ -44,33 +52,53 @@ attackTestBoard2 = V.fromList [Cell 0 3, Cell 1 2, Cell 1 2, Cell 1 1 ]
 attackTestBoard3:: Board
 attackTestBoard3 = V.fromList [Cell 0 3, Cell 0 3, Cell 1 3, Cell 1 1 ]
 
+-- | Generates a random board from a GameSetup
 randBoard :: GameSetup -> Rnd (Vector Cell)
 randBoard gs = V.replicateM l $ randCell p d
   where l = boardSize gs * boardSize gs
         p = playerCnt gs
         d = maxDice gs
 
+-- | public function to generate a random board from a GameSetup
 generateBoard :: GameSetup -> IO (Vector Cell)
 generateBoard gs = do
   evalRandIO $ randBoard gs
 
+-- | knowns enough of the game rules to bulid a cell from 
+-- the number of players and he max number of dice
 randCell :: Int -> Int -> Rnd Cell
 randCell np d = do
   o <- getRandomR (0, (np - 1)) :: Rnd Int
   c <- getRandomR (1, d) :: Rnd Int
   return $ Cell o c
 
+-- | using a MemoTrie to speed up the creation of GameTrees
 mGT = memo GameTree
 
-buildTree :: GameSetup -> Board -> Player -> Int -> Bool -> Maybe Attack -> GameTree
+-- | bulids the tree of all legal moves rooted at a given board position
+buildTree :: GameSetup -- ^ the game config
+          -> Board  -- ^ the starting position for the tree
+          -> Player  -- ^ the player to move from this position
+          -> Int  -- ^ how many dice have been caputured this turn
+          -> Bool  -- ^ if this is the first move of the player's turn
+          -> Maybe Attack  -- ^ an Attack if that is how we got to the board, Nothing otherwise
+          -> GameTree  -- ^ the root node of the GameTree
 buildTree g brd plyr srdc fm atk =
   mGT plyr brd atk $ addPassingMoves g brd plyr srdc fm $
     addAttackingMoves g brd plyr srdc
 
+-- | selects the next player based on the current player
 nxtPlyr :: Player -> GameSetup -> Player
 nxtPlyr p g = rem (p + 1) $ playerCnt g
 
-addPassingMoves :: GameSetup -> Board -> Player -> Int -> Bool -> [GameTree] -> [GameTree]
+-- | helper function to buildTree that adds the turn-end move
+addPassingMoves :: GameSetup -- ^ the game configuration
+                -> Board  -- ^ the board the player is passing on
+                -> Player  -- ^ the player doing the passing
+                -> Int  -- ^ how many dice the player captured prior to passing
+                -> Bool  -- ^ if this is the player's first move of the turn
+                -> [GameTree]  -- ^ the moves that an attack would generate
+                -> [GameTree]  -- ^ the attack moves plus the possible passing move
 addPassingMoves _ _ _ _ True mvs = mvs
 addPassingMoves g brd plyr srdc False mvs = 
    (buildTree g 
