@@ -17,6 +17,7 @@ type Attack = (Int, Int)
 data GameSetup = GameSetup { playerCnt :: Int
                            , boardSize :: Int
                            , maxDice :: Int
+                           , aiLevel :: Int
                            , neighborF :: (Int -> [Int])
                            }-- deriving (Show)
 
@@ -28,7 +29,7 @@ data GameTree = GameTree { player :: Player
                 | Exit deriving (Show, Eq)
 
 buildGS :: Int -> Int -> Int -> GameSetup
-buildGS ps sz md = GameSetup ps sz md f
+buildGS ps sz md = GameSetup ps sz md 4 f
   where table = V.fromList [ neighbors sz x | x <- [0..(sz*sz-1)]]
         f = \x-> table ! x
 
@@ -254,12 +255,13 @@ ratePosition t@(GameTree cp _ _ _) p = f ( getRatings t p)
   where f = case p == cp of True -> (maximum) 
                             False -> (minimum)
 
-handleComputer :: GameTree -> GameTree
-handleComputer t@(GameTree p _ _ ms) = head $ 
+handleComputer :: GameSetup -> GameTree -> GameTree
+handleComputer g t@(GameTree p _ _ ms) = head $ 
     dropWhile (\m->ratePosition m p < mx ) ms
-  where rs = getRatings t $ player t
+  where mvs = limitTreeDepth t $ aiLevel g
+        rs = getRatings mvs $ player t
         mx = maximum rs
-handleComputer Exit = Exit
+handleComputer _ Exit = Exit
 
 playVsComputer :: GameSetup -> GameTree -> IO ()
 playVsComputer _ Exit = do
@@ -272,15 +274,15 @@ playVsComputer g t = do
   case player t of 0 -> do
                      mv <- handleHuman t 
                      playVsComputer g mv
-                   _ -> playVsComputer g $ handleComputer t
+                   _ -> playVsComputer g $ handleComputer g t
 
 cpuVsCpu :: GameSetup -> GameTree -> IO ()
 cpuVsCpu _ Exit = do
   putStrLn "Thanks for playing"
-cpuVsCpu g t@(GameTree _ _ _ []) = do
+cpuVsCpu _ t@(GameTree _ _ _ []) = do
   announceWinner $ board t
 cpuVsCpu g t = do
-  cpuVsCpu g $ handleComputer t
+  cpuVsCpu g $ handleComputer g t
 
 limitTreeDepth _ 0 = Exit
 limitTreeDepth (GameTree p b a _ms) 1 =
