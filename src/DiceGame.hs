@@ -281,3 +281,9 @@ cpuVsCpu g t@(GameTree _ _ _ []) = do
   announceWinner $ board t
 cpuVsCpu g t = do
   cpuVsCpu g $ handleComputer t
+
+limitTreeDepth _ 0 = Exit
+limitTreeDepth (GameTree p b a _ms) 1 =
+  mGT p b a []
+limitTreeDepth t@(GameTree p b a ms) d = 
+  mGT p b a $ map (\m->limitTreeDepth m (d - 1)) ms

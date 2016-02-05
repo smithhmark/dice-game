@@ -115,3 +115,16 @@ spec = do
         ratePosition now 0 `shouldBe` 1.0
       it "should rate this position as a loss for player 1" $ do 
         ratePosition now 1 `shouldBe` 0.0
+
+  describe "limitTreeDepth" $ do
+    let bigTree = GameTree 0 (V.fromList []) Nothing [ 
+                     GameTree 1 (V.fromList []) Nothing []
+                   , GameTree 0 (V.fromList []) Nothing []
+                   ]
+    it "gives just root when asked" $ do
+      limitTreeDepth bigTree 1 `shouldBe` GameTree 0 (V.fromList []) Nothing []
+    it "gives the whole thing when asked" $ do
+      limitTreeDepth bigTree 2 `shouldBe` bigTree
+    it "handels \"underflow\"" $ do
+      limitTreeDepth bigTree 3 `shouldBe` bigTree
+      limitTreeDepth bigTree 2 `shouldBe` bigTree
