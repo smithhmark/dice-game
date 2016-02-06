@@ -314,6 +314,7 @@ cpuVsCpu g t = do
 
 -- | returns a GameTree that is restricted to the given depth of positions
 limitTreeDepth _ 0 = Exit
+limitTreeDepth Exit _ = Exit
 limitTreeDepth (GameTree p b a _ms) 1 =
   mGT p b a []
 limitTreeDepth t@(GameTree p b a ms) d = 
