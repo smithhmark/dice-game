@@ -19,6 +19,8 @@ library
   if flag(documentation)
      build-depends: hscolour == 1.20.*
   exposed-modules:     DiceGame
+                       , GameAI
+                       , ConsolePlay
   hs-source-dirs:      src
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5

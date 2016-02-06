@@ -2,6 +2,7 @@ module Main where
 import System.IO
 
 import DiceGame
+import ConsolePlay
 
 main :: IO ()
 main = do
