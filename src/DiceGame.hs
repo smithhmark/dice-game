@@ -312,8 +312,23 @@ cpuVsCpu _ t@(GameTree _ _ _ []) = do
 cpuVsCpu g t = do
   cpuVsCpu g $ handleComputer g t
 
+-- | returns a GameTree that is restricted to the given depth of positions
 limitTreeDepth _ 0 = Exit
 limitTreeDepth (GameTree p b a _ms) 1 =
   mGT p b a []
 limitTreeDepth t@(GameTree p b a ms) d = 
   mGT p b a $ map (\m->limitTreeDepth m (d - 1)) ms
+
+-- | returns a GameTree that is restricted to the given depth of turns
+limitTreeDepth' Exit _ = Exit
+limitTreeDepth' (GameTree p b a ms) 0 = 
+  mGT p b a $ concat $ map (\st@(GameTree lp _ _ ms) ->
+      if lp == p 
+      then [limitTreeDepth' st 0]
+      else []) ms
+limitTreeDepth' (GameTree p b a ms) d = 
+  mGT p b a $ map (
+    \st@(GameTree lp _ _ ms) ->
+      if lp == p 
+      then limitTreeDepth' st d
+      else limitTreeDepth' st (d - 1)) ms
