@@ -1,5 +1,6 @@
 module DiceGame where
 
+import qualified Data.Map.Strict as M
 import Data.Vector (Vector, (!), (//))
 import qualified Data.Vector as V
 import System.Random
@@ -34,7 +35,7 @@ data GameTree = GameTree { player :: Player
                 | Exit deriving (Show, Eq)
 
 buildGS :: Int -> Int -> Int -> GameSetup
-buildGS ps sz md = GameSetup ps sz md 4 f
+buildGS ps sz md = GameSetup ps sz md 2 f
   where table = V.fromList [ neighbors sz x | x <- [0..(sz*sz-1)]]
         f = \x-> table ! x
 
@@ -149,15 +150,19 @@ potentialTargets :: Player -> Board -> [Int] -> [[Int]] -> [(Int, [Int])]
 potentialTargets p b srcs ns = zip srcs enemies
   where enemies = map (removeFriendlies p b) ns
 
+-- | given a [Board] and a list of attack possibilities, filter them to only
+-- those with a favorable dice imbalance.
 winnable :: Board -> [(Int, [Int])] -> [(Int, [Int])]
 winnable b = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds))
 
+-- | produces the list of viable attack moves
 attacks :: GameSetup -> Board -> Player -> [ (Int, Int) ]
 attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
   where srcs = playerCells b p
         nes = map (removeFriendlies p b . neighborF g) srcs
         val = winnable b $ zip srcs nes
 
+-- | produces the list of viable post-attack board positions
 addAttackingMoves :: GameSetup -> Board -> Player -> Int -> [GameTree]
 addAttackingMoves g b p sprd = gts
   where ats = attacks g b p
@@ -173,16 +178,12 @@ attackBoard b p (src,dst) d = b // [sc, dc]
   where sc = (src, Cell p 1)
         dc = (dst, Cell p (d - 1))
 
-playerCounts :: Board -> [(Int, Player)] -> [(Int, Player)]
-playerCounts b ws = case lo of 0 -> (lp, p):ws
-                               _ -> playerCounts ocs $ (lp, p):ws
-  where p = playerAt 0 b
-        (pcs, ocs) = V.partition (\c-> p == owner c) b
-        lp = V.length pcs
-        lo = V.length ocs
+territoryCount :: Board -> M.Map Player Int
+territoryCount brd = foldr work M.empty brd
+  where work (Cell p _d) ac= M.insertWith (+) p 1 ac
 
 winners :: Board -> [Player]
-winners b = map snd $ filter (\c-> fst c == mx) cnts
-  where cnts = playerCounts b []
-        mx = foldl (\a (c, _p)-> if c > a then c else a) 0 cnts
+winners b = M.keys $ M.filter (== mx) cnts
+  where cnts = territoryCount b
+        mx = maximum $ M.elems cnts
 

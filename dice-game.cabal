@@ -28,6 +28,7 @@ library
                        , random
                        , MonadRandom
                        , MemoTrie
+                       , containers
 
 executable dice-game
   hs-source-dirs:      app
@@ -53,4 +54,5 @@ test-suite dice-game-test
                      , hspec
                      , dice-game
                      , vector
+                     , containers
 

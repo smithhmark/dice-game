@@ -6,6 +6,8 @@ import Test.Hspec.QuickCheck
 import DiceGame
 
 import qualified Data.Vector as V
+import qualified Data.Map.Strict as M
+import qualified Data.List as L
 
 spec :: Spec
 spec = do
@@ -69,19 +71,19 @@ spec = do
           `shouldBe`
                    V.fromList [Cell 0 2,Cell 1 3,Cell 0 2,Cell 1 1]
 
-  describe "playerCounts" $ do
+  describe "territoryCount" $ do
     let t = V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1]
         v = V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 0 1]
     it "finds the tie" $ do
-      playerCounts t [] `shouldBe` [(2, 1), (2, 0)] 
+      territoryCount t `shouldBe` M.fromList [(1, 2), (0, 2)] 
     it "finds player 0 has the edge" $ do
-      playerCounts v [] `shouldBe` [(1, 1), (3, 0)] 
+      territoryCount v `shouldBe` M.fromList [(1, 1), (0, 3)] 
 
   describe "winners" $ do
     it "builds a list of players with max ownership" $ do
       winners (V.fromList [Cell 1 1,Cell 1 3,Cell 0 2,Cell 1 1])
         `shouldBe` [1] 
     it "builds a list of players with max ownership (tie)" $ do
-      winners (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
-        `shouldBe` [1, 0] 
+      L.sort (winners (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1]))
+        `shouldBe` (L.sort [1, 0])
 
