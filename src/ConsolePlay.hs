@@ -44,7 +44,7 @@ cpuVsCpu _ Exit = do
 cpuVsCpu _ t@(GameTree _ _ _ []) = do
   announceWinner $ board t
 cpuVsCpu g t = do
-  cpuVsCpu g $ handlePerfectComputer g t
+  cpuVsCpu g $ handleHeuristicComputer g t
 
 -- | The main loop for a humans only game
 playVsHuman :: GameSetup -> GameTree -> IO ()
