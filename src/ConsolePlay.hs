@@ -35,7 +35,7 @@ playVsComputer g t = do
   case player t of 0 -> do
                      mv <- handleHuman t 
                      playVsComputer g mv
-                   _ -> playVsComputer g $ handleComputer g t
+                   _ -> playVsComputer g $ handleHeuristicComputer g t
 
 -- | The main loop for a computer player only game
 cpuVsCpu :: GameSetup -> GameTree -> IO ()
@@ -44,7 +44,7 @@ cpuVsCpu _ Exit = do
 cpuVsCpu _ t@(GameTree _ _ _ []) = do
   announceWinner $ board t
 cpuVsCpu g t = do
-  cpuVsCpu g $ handleComputer g t
+  cpuVsCpu g $ handlePerfectComputer g t
 
 -- | The main loop for a humans only game
 playVsHuman :: GameSetup -> GameTree -> IO ()
