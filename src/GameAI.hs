@@ -2,8 +2,10 @@ module GameAI where
 
 import Data.Vector (Vector, (!), (//))
 import qualified Data.Vector as V
-
+import qualified Data.PQueue.Prio.Max as MxQ
+import qualified Data.PQueue.Prio.Min as MnQ
 import DiceGame
+import qualified Safe as S
 
 getRatings :: GameTree -> Player -> [Float]
 getRatings = getRatingsA
@@ -31,10 +33,11 @@ ratePosAbsolute t@(GameTree cp _ _ _) p = f ( getRatingsA t p)
 handlePerfectComputer :: GameSetup -- ^ the config
                       -> GameTree -- ^ the current game position
                       -> GameTree -- ^ the resulting game position
-handlePerfectComputer g t@(GameTree p _ _ ms) = head $ 
+handlePerfectComputer g t@(GameTree p _ _ ms) = S.headNote note $ 
     dropWhile (\m->ratePosAbsolute m p < mx ) ms
   where rs = getRatingsA t $ player t
         mx = maximum rs
+        note = "hPerfComp: " ++ (show rs)
 handlePerfectComputer _ Exit = Exit
 
 
@@ -99,13 +102,48 @@ ratePosHeuristic gs t@(GameTree cp _ _ _) p = f ( getRatingsH gs t p)
   where f = case p == cp of True -> (maximum) 
                             False -> (minimum)
 
+rateOwnChildren :: GameSetup 
+                -> GameTree
+                -> Player
+                -> MxQ.MaxPQueue Float GameTree
+rateOwnChildren _gs Exit _p = MxQ.empty -- ^ degenerate case
+rateOwnChildren _gs (GameTree _ _ _ []) _p = MxQ.empty 
+rateOwnChildren gs t@(GameTree _p _b _a ms) p = foldl work MxQ.empty ms
+  where work acc m = let score = fst $ ratePosHeuristic2 gs m p
+                     in MxQ.insert score m acc
+
+rateOtherChildren :: GameSetup 
+                  -> GameTree
+                  -> Player
+                  -> MnQ.MinPQueue Float GameTree
+rateOtherChildren _gs Exit _p = MnQ.empty
+rateOtherChildren _gs (GameTree _ _ _ []) _p = MnQ.empty
+rateOtherChildren gs t@(GameTree _p _b _a ms) p = foldl work MnQ.empty ms
+  where work acc m = let score = fst $ ratePosHeuristic2 gs m p
+                     in MnQ.insert score m acc
+
+-- | use a heuristic to rate the player's given position
+ratePosHeuristic2 :: GameSetup -> GameTree -> Player -> (Float, GameTree)
+ratePosHeuristic2 _ Exit _ = (0.0, Exit)
+ratePosHeuristic2 gs t@(GameTree _ b _ []) p = (
+  fromIntegral $ scoreBoard gs b p, t)
+ratePosHeuristic2 gs t@(GameTree cp _ _ _) p = case p == cp of
+  True -> MxQ.findMax $ rateOwnChildren gs t p
+  False -> MnQ.findMin $ rateOtherChildren gs t p
+
 -- | a function to select the move the computer will make
 handleHeuristicComputer :: GameSetup -- ^ the config
                         -> GameTree -- ^ the current game position
                         -> GameTree -- ^ the resulting game position
-handleHeuristicComputer gs t@(GameTree p _ _ ms) = head $ 
+handleHeuristicComputer _ Exit = Exit
+handleHeuristicComputer gs t@(GameTree p _ _ ms) = 
+  snd $ ratePosHeuristic2 gs t p 
+{-  S.headNote note $ 
     dropWhile (\m->ratePosHeuristic gs  m p <  mx - 0.0001 ) ms
   where mvs = limitTreeDepth' t $ aiLevel gs
         rs = getRatingsH gs mvs $ player t
         mx = maximum rs
-handleHeuristicComputer _ Exit = Exit
+        dw = dropWhile (\m->ratePosHeuristic gs  m p <  mx - 0.0001 ) ms
+        note = "hHeurComp: max=" ++ show mx ++ " rs=" ++ show rs ++ 
+                " post dw+" ++ show dw
+-}

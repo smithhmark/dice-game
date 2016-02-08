@@ -29,6 +29,8 @@ library
                        , MonadRandom
                        , MemoTrie
                        , containers
+                       , pqueue
+                       , safe
 
 executable dice-game
   hs-source-dirs:      app
