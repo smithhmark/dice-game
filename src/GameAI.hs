@@ -30,13 +30,12 @@ ratePosAbsolute t@(GameTree cp _ _ _) p = f ( getRatingsA t p)
                             False -> (minimum)
 
 -- | a function to select the move the computer will make
-handlePerfectComputer :: GameSetup -- ^ the config
-                      -> GameTree -- ^ the current game position
+handlePerfectComputer :: GameTree -- ^ the current game position
                       -> GameTree -- ^ the resulting game position
-handlePerfectComputer g t@(GameTree p _ _ ms) = snd $ MxQ.findMax q
+handlePerfectComputer t@(GameTree p _ _ ms) = snd $ MxQ.findMax q
   where ifn a (v, k) = MxQ.insert k v a
         q = foldl ifn MxQ.empty $ zip ms $ getRatingsA t $ player t
-handlePerfectComputer _ Exit = Exit
+handlePerfectComputer Exit = Exit
 
 
 -- | makes of copy of a [GameTree] to a limited depth
