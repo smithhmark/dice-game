@@ -104,22 +104,23 @@ addPassingMoves _ _ _ True mvs = mvs
 addPassingMoves brd plyr srdc False mvs = do
   g <- ask
   bs <- mvs
-  n <- buildTree (addNewDice g brd plyr (srdc - 1)) 
+  nb <- addNewDice brd plyr (srdc - 1)
+  n <- buildTree nb
              (nxtPlyr plyr g) 
              0 
              True
              Nothing
   return $ n : bs
 
-addNewDice :: GameSetup -> Board -> Player -> Int -> Board
-addNewDice gs b p d = 
-  case d > spots of True -> undefined
-                    False -> b // updates
-  where pcs = playerCells b p
-        haveRoom = filter (\i-> diceAt i b < maxDice gs) pcs
-        spots = length haveRoom
-        updates = foldr (\i a-> (i, Cell p (diceAt i b + 1)):a) [] 
-          $ take d haveRoom
+addNewDice :: Board -> Player -> Int -> Reader GameSetup Board
+addNewDice b p d = do
+  md <- asks maxDice
+  let pcs = playerCells b p
+      haveRoom = filter (\i-> diceAt i b < md) pcs
+      spots = length haveRoom
+      updates = foldr (\i a-> (i, Cell p (diceAt i b + 1)):a) [] 
+        $ take d haveRoom
+  return $ b // updates
 
 playerAt :: Int -> Board -> Player
 playerAt pos brd = owner $! brd ! pos

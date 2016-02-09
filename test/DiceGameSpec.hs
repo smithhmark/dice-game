@@ -58,18 +58,18 @@ spec = do
   describe "addNewDice" $ do
     context "where there are fewer dice than open cells" $ do
       it "adds dice to open cells" $ do
-        addNewDice (buildGS 2 2 3) 
-                   (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
-                   0
-                   2
+        runReader (addNewDice 
+                  (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
+                  0
+                  2) (buildGS 2 2 3) 
           `shouldBe`
                    V.fromList [Cell 0 2,Cell 1 3,Cell 0 3,Cell 1 1]
     context "where there are more dice than open cells" $ do
       it "adds dice to open cells, but not too many" $ do
-        addNewDice (buildGS 2 2 3) 
+        runReader (addNewDice 
                    (V.fromList [Cell 0 1,Cell 1 3,Cell 0 2,Cell 1 1])
                    0
-                   1
+                   1) (buildGS 2 2 3) 
           `shouldBe`
                    V.fromList [Cell 0 2,Cell 1 3,Cell 0 2,Cell 1 1]
 
