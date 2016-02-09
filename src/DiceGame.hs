@@ -5,6 +5,7 @@ import Data.Vector (Vector, (!), (//))
 import Data.List
 import qualified Data.Vector as V
 import System.Random
+import Control.Monad
 import Control.Monad.Random
 import Control.Monad.Reader
 import Data.MemoTrie
@@ -86,7 +87,7 @@ buildTree :: Board  -- ^ the starting position for the tree
 buildTree brd plyr srdc fm atk = do
   g <- ask
   return $ mGT plyr brd atk $ addPassingMoves g brd plyr srdc fm $
-    addAttackingMoves g brd plyr srdc
+    runReader (addAttackingMoves brd plyr srdc) g
 
 -- | selects the next player based on the current player
 nxtPlyr :: Player -> GameSetup -> Player
@@ -168,15 +169,15 @@ attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
         val = winnable b $ zip srcs nes
 
 -- | produces the list of viable post-attack board positions
-addAttackingMoves :: GameSetup -> Board -> Player -> Int -> [GameTree]
-addAttackingMoves g b p sprd = gts
-  where ats = attacks g b p
-        dice1 = map (\(s, _)-> diceAt s b) ats
-        dice2 = map (\(_, d)-> diceAt d b) ats
-        zd = zip3 ats dice1 dice2
-        gts = [
-          runReader (buildTree (attackBoard b p a ds) p (sprd + dd) False $ Just a ) g | 
-               (a, ds, dd) <- zd]
+addAttackingMoves :: Board -> Player -> Int -> Reader GameSetup [GameTree]
+addAttackingMoves b p sprd = do
+  g <- ask
+  let ats = attacks g b p
+      dice1 = map (\(s, _)-> diceAt s b) ats
+      dice2 = map (\(_, d)-> diceAt d b) ats
+      zd = zip3 ats dice1 dice2
+  sequence [buildTree (attackBoard b p a ds) p (sprd + dd) False $ Just a | 
+    (a, ds, dd) <- zd]
 
 attackBoard :: Board -> Player -> (Int, Int) -> Int -> Board
 attackBoard b p (src,dst) d = b // [sc, dc]
