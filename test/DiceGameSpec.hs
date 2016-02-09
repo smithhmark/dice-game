@@ -5,6 +5,7 @@ import Test.Hspec.QuickCheck
 
 import DiceGame
 
+import Control.Monad.Reader
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
 import qualified Data.List as L
@@ -46,12 +47,13 @@ spec = do
 
   describe "attacks" $ do
     it "discovers sole attack" $ do
-      attacks (buildGS 2 2 3) attackTestBoard 0 `shouldBe` [ (0, 2) ]
+      runReader (attacks attackTestBoard 0) (buildGS 2 2 3) 
+        `shouldBe` [ (0, 2) ]
     it "discovers all attacks" $ do
-      attacks (buildGS 2 2 3) attackTestBoard2 0 `shouldBe` 
-        [ (0, 1), (0, 2), (0,3) ]
+      runReader (attacks attackTestBoard2 0) (buildGS 2 2 3)
+        `shouldBe` [ (0, 1), (0, 2), (0,3) ]
     it "handles zero attacks" $ do
-      attacks (buildGS 2 2 3) attackTestBoard2 1 `shouldBe` []
+      runReader (attacks attackTestBoard2 1) (buildGS 2 2 3) `shouldBe` []
 
   describe "addNewDice" $ do
     context "where there are fewer dice than open cells" $ do

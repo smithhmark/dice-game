@@ -162,18 +162,22 @@ winnable :: Board -> [(Int, [Int])] -> [(Int, [Int])]
 winnable b = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds))
 
 -- | produces the list of viable attack moves
-attacks :: GameSetup -> Board -> Player -> [ (Int, Int) ]
-attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
-  where srcs = playerCells b p
-        nes = map (removeFriendlies2 srcs . neighborF g) srcs
-        val = winnable b $ zip srcs nes
+attacks :: Board
+        -> Player
+        -> Reader GameSetup [ (Int, Int) ]
+attacks b p = do
+  g <- ask
+  let srcs = playerCells b p
+      nes = map (removeFriendlies2 srcs . neighborF g) srcs
+      val = winnable b $ zip srcs nes
+  return $ concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
 
 -- | produces the list of viable post-attack board positions
 addAttackingMoves :: Board -> Player -> Int -> Reader GameSetup [GameTree]
 addAttackingMoves b p sprd = do
   g <- ask
-  let ats = attacks g b p
-      dice1 = map (\(s, _)-> diceAt s b) ats
+  ats <- attacks b p
+  let dice1 = map (\(s, _)-> diceAt s b) ats
       dice2 = map (\(_, d)-> diceAt d b) ats
       zd = zip3 ats dice1 dice2
   sequence [buildTree (attackBoard b p a ds) p (sprd + dd) False $ Just a | 
