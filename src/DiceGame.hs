@@ -85,9 +85,8 @@ buildTree :: Board  -- ^ the starting position for the tree
           -> Maybe Attack  -- ^ an Attack if that is how we got to the board, Nothing otherwise
           -> Reader GameSetup GameTree  -- ^ the root node of the GameTree
 buildTree brd plyr srdc fm atk = do
-  g <- ask
-  return $ mGT plyr brd atk $ runReader (addPassingMoves brd plyr srdc fm $
-    addAttackingMoves brd plyr srdc ) g
+  mvs <- addPassingMoves brd plyr srdc fm $ addAttackingMoves brd plyr srdc  
+  return $ mGT plyr brd atk mvs
 
 -- | selects the next player based on the current player
 nxtPlyr :: Player -> Reader GameSetup Player
