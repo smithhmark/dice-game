@@ -11,6 +11,8 @@ The "Land of Lisp" book has a great extended example of building a dice game fro
 | My User prompts aren't showing up when I think they should(stdout buffering)| flushing stdout with hFlush from System.IO| [this SO question](http://stackoverflow.com/questions/13190314/haskell-do-monad-io-happens-out-of-order) |
 | fixtures would improve the readability of my tests  | using context and let in tests | http://www.codewars.com/docs/haskell-test-reference  |
 | profiling time of execution  | stack has flags for this plus some explicit ghc flags  | the stack stuff is [here](https://github.com/commercialhaskell/stack/blob/master/doc/GUIDE.md#debugging) the compiler flags came from [here](http://stackoverflow.com/a/3276557)  |
+| there were unsafe head issues with handling AI players  | i used Safe.headNote to help debug this  |  |
+| I fixed the unsafe head issues by using a priority queue |  | i Used PQueue. other priority queue implementations do not allow you to easily discover the priorities |
 |  |  |  |
 
 ## other sources
