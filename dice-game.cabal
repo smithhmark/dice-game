@@ -31,6 +31,7 @@ library
                        , containers
                        , pqueue
                        , safe
+                       , mtl
 
 executable dice-game
   hs-source-dirs:      app
@@ -39,6 +40,7 @@ executable dice-game
   build-depends:       base >= 4.7 && < 5
                        , dice-game
                        , vector
+                       , mtl
 
 executable stress
   hs-source-dirs:      stresser
@@ -46,6 +48,7 @@ executable stress
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                        , dice-game
+                       , mtl
 
 test-suite dice-game-test
   type:                exitcode-stdio-1.0
@@ -57,4 +60,5 @@ test-suite dice-game-test
                      , dice-game
                      , vector
                      , containers
+                     , mtl
 

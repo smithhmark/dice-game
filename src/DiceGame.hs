@@ -2,9 +2,11 @@ module DiceGame where
 
 import qualified Data.Map.Strict as M
 import Data.Vector (Vector, (!), (//))
+import Data.List
 import qualified Data.Vector as V
 import System.Random
 import Control.Monad.Random
+import Control.Monad.Reader
 import Data.MemoTrie
 
 -- | Players are really Ints, but makes the type sigs more helpful
@@ -75,15 +77,15 @@ randCell np d = do
 mGT = memo GameTree
 
 -- | bulids the tree of all legal moves rooted at a given board position
-buildTree :: GameSetup -- ^ the game config
-          -> Board  -- ^ the starting position for the tree
+buildTree :: Board  -- ^ the starting position for the tree
           -> Player  -- ^ the player to move from this position
           -> Int  -- ^ how many dice have been caputured this turn
           -> Bool  -- ^ if this is the first move of the player's turn
           -> Maybe Attack  -- ^ an Attack if that is how we got to the board, Nothing otherwise
-          -> GameTree  -- ^ the root node of the GameTree
-buildTree g brd plyr srdc fm atk =
-  mGT plyr brd atk $ addPassingMoves g brd plyr srdc fm $
+          -> Reader GameSetup GameTree  -- ^ the root node of the GameTree
+buildTree brd plyr srdc fm atk = do
+  g <- ask
+  return $ mGT plyr brd atk $ addPassingMoves g brd plyr srdc fm $
     addAttackingMoves g brd plyr srdc
 
 -- | selects the next player based on the current player
@@ -100,12 +102,11 @@ addPassingMoves :: GameSetup -- ^ the game configuration
                 -> [GameTree]  -- ^ the attack moves plus the possible passing move
 addPassingMoves _ _ _ _ True mvs = mvs
 addPassingMoves g brd plyr srdc False mvs = 
-   (buildTree g 
-             (addNewDice g brd plyr (srdc - 1)) 
-             (nxtPlyr plyr g) 
-             0 
-             True
-             Nothing) : mvs
+   (runReader (buildTree (addNewDice g brd plyr (srdc - 1)) 
+              (nxtPlyr plyr g) 
+              0 
+              True
+              Nothing) g) : mvs
 
 addNewDice :: GameSetup -> Board -> Player -> Int -> Board
 addNewDice gs b p d = 
@@ -118,10 +119,10 @@ addNewDice gs b p d =
           $ take d haveRoom
 
 playerAt :: Int -> Board -> Player
-playerAt pos brd = owner $ brd ! pos
+playerAt pos brd = owner $! brd ! pos
 
 diceAt :: Int -> Board -> Int
-diceAt pos brd = dice $ brd ! pos
+diceAt pos brd = dice $! brd ! pos
 
 ownedByP :: Player -> Cell -> Bool
 ownedByP p c = p == owner c
@@ -141,10 +142,14 @@ neighbors sz pos = filter (>= 0) . filter (< ml) $ concat [g2, g3]
                                 True -> [down]
 
 playerCells:: Board -> Player -> [Int]
-playerCells b p = V.toList $ V.findIndices (ownedByP p) b
+playerCells b p = V.toList $! V.findIndices (ownedByP p) b
 
 removeFriendlies :: Player -> Board -> [Int] -> [Int]
-removeFriendlies p b = filter (\x -> not (ownedByP p (b ! x)))
+removeFriendlies p b = filter pred
+  where pred x = not (ownedByP p (b ! x))
+
+removeFriendlies2 :: [Int] -> [Int] -> [Int]
+removeFriendlies2 ps qs = qs \\ ps
 
 potentialTargets :: Player -> Board -> [Int] -> [[Int]] -> [(Int, [Int])]
 potentialTargets p b srcs ns = zip srcs enemies
@@ -159,7 +164,7 @@ winnable b = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds))
 attacks :: GameSetup -> Board -> Player -> [ (Int, Int) ]
 attacks g b p = concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
   where srcs = playerCells b p
-        nes = map (removeFriendlies p b . neighborF g) srcs
+        nes = map (removeFriendlies2 srcs . neighborF g) srcs
         val = winnable b $ zip srcs nes
 
 -- | produces the list of viable post-attack board positions
@@ -170,7 +175,7 @@ addAttackingMoves g b p sprd = gts
         dice2 = map (\(_, d)-> diceAt d b) ats
         zd = zip3 ats dice1 dice2
         gts = [
-          buildTree g (attackBoard b p a ds) p (sprd + dd) False $ Just a | 
+          runReader (buildTree (attackBoard b p a ds) p (sprd + dd) False $ Just a ) g | 
                (a, ds, dd) <- zd]
 
 attackBoard :: Board -> Player -> (Int, Int) -> Int -> Board

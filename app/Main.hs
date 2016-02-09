@@ -1,5 +1,6 @@
 module Main where
 import System.IO
+import Control.Monad.Reader
 
 import DiceGame
 import ConsolePlay
@@ -20,7 +21,7 @@ main = do
                      d = read diceS :: Int
                      gs = buildGS 2 sz d
                  brd <- generateBoard gs
-                 let startingTree = buildTree gs brd 0 0 True Nothing
+                 let startingTree = runReader (buildTree brd 0 0 True Nothing) gs
                  playVsComputer gs startingTree
                _ -> do
                  putStrLn "How many players?"
@@ -36,5 +37,5 @@ main = do
                    ++ " players and up to " ++ show d ++ " dice per cell\n"
                  brd <- generateBoard gs
 
-                 let startingTree = buildTree gs brd 0 0 True Nothing
+                 let startingTree = runReader (buildTree brd 0 0 True Nothing) gs
                  playVsHuman gs startingTree
