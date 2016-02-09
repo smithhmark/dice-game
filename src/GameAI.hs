@@ -33,11 +33,9 @@ ratePosAbsolute t@(GameTree cp _ _ _) p = f ( getRatingsA t p)
 handlePerfectComputer :: GameSetup -- ^ the config
                       -> GameTree -- ^ the current game position
                       -> GameTree -- ^ the resulting game position
-handlePerfectComputer g t@(GameTree p _ _ ms) = S.headNote note $ 
-    dropWhile (\m->ratePosAbsolute m p < mx ) ms
-  where rs = getRatingsA t $ player t
-        mx = maximum rs
-        note = "hPerfComp: " ++ (show rs)
+handlePerfectComputer g t@(GameTree p _ _ ms) = snd $ MxQ.findMax q
+  where ifn a (v, k) = MxQ.insert k v a
+        q = foldl ifn MxQ.empty $ zip ms $ getRatingsA t $ player t
 handlePerfectComputer _ Exit = Exit
 
 
@@ -138,12 +136,3 @@ handleHeuristicComputer :: GameSetup -- ^ the config
 handleHeuristicComputer _ Exit = Exit
 handleHeuristicComputer gs t@(GameTree p _ _ ms) = 
   snd $ ratePosHeuristic2 gs t p 
-{-  S.headNote note $ 
-    dropWhile (\m->ratePosHeuristic gs  m p <  mx - 0.0001 ) ms
-  where mvs = limitTreeDepth' t $ aiLevel gs
-        rs = getRatingsH gs mvs $ player t
-        mx = maximum rs
-        dw = dropWhile (\m->ratePosHeuristic gs  m p <  mx - 0.0001 ) ms
-        note = "hHeurComp: max=" ++ show mx ++ " rs=" ++ show rs ++ 
-                " post dw+" ++ show dw
--}
