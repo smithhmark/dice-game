@@ -175,7 +175,6 @@ attacks b p = do
 -- | produces the list of viable post-attack board positions
 addAttackingMoves :: Board -> Player -> Int -> Reader GameSetup [GameTree]
 addAttackingMoves b p sprd = do
-  g <- ask
   ats <- attacks b p
   let dice1 = map (\(s, _)-> diceAt s b) ats
       dice2 = map (\(_, d)-> diceAt d b) ats
