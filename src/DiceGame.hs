@@ -104,7 +104,6 @@ addPassingMoves :: Board  -- ^ the board the player is passing on
                 -> Reader GameSetup [GameTree]  -- ^ the attack moves plus the possible passing move
 addPassingMoves _ _ _ True mvs = mvs
 addPassingMoves brd plyr srdc False mvs = do
-  g <- ask
   bs <- mvs
   nb <- addNewDice brd plyr (srdc - 1)
   np <- nxtPlyr plyr
