@@ -167,9 +167,9 @@ attacks :: Board
         -> Player
         -> Reader GameSetup [ (Int, Int) ]
 attacks b p = do
-  g <- ask
+  nf <- asks neighborF
   let srcs = playerCells b p
-      nes = map (removeFriendlies2 srcs . neighborF g) srcs
+      nes = map (removeFriendlies2 srcs . nf) srcs
       val = winnable b $ zip srcs nes
   return $ concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
 
