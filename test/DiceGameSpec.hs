@@ -14,9 +14,9 @@ spec :: Spec
 spec = do
   describe "nxtPlyr" $ do
     it "finds the player who's turn is next" $ do
-      nxtPlyr 0 (buildGS 2 42 3) `shouldBe` 1
+      runReader (nxtPlyr 0) (buildGS 2 42 3) `shouldBe` 1
     it "finds the player who's turn is next wrapping around" $ do
-      nxtPlyr 32 (buildGS 33 42 3) `shouldBe` 0
+      runReader (nxtPlyr 32) (buildGS 33 42 3) `shouldBe` 0
 
   describe "neighbors" $ do
     it "handles bottom-left positions" $ do

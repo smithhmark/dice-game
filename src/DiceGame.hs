@@ -90,8 +90,10 @@ buildTree brd plyr srdc fm atk = do
     addAttackingMoves brd plyr srdc ) g
 
 -- | selects the next player based on the current player
-nxtPlyr :: Player -> GameSetup -> Player
-nxtPlyr p g = rem (p + 1) $ playerCnt g
+nxtPlyr :: Player -> Reader GameSetup Player
+nxtPlyr p = do
+  np <- asks playerCnt
+  return $ rem (p + 1) np
 
 -- | helper function to buildTree that adds the turn-end move
 addPassingMoves :: Board  -- ^ the board the player is passing on
@@ -105,11 +107,8 @@ addPassingMoves brd plyr srdc False mvs = do
   g <- ask
   bs <- mvs
   nb <- addNewDice brd plyr (srdc - 1)
-  n <- buildTree nb
-             (nxtPlyr plyr g) 
-             0 
-             True
-             Nothing
+  np <- nxtPlyr plyr
+  n <- buildTree nb np 0 True Nothing
   return $ n : bs
 
 addNewDice :: Board -> Player -> Int -> Reader GameSetup Board
