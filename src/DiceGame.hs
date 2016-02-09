@@ -109,7 +109,11 @@ addPassingMoves brd plyr srdc False mvs = do
   n <- buildTree nb np 0 True Nothing
   return $ n : bs
 
-addNewDice :: Board -> Player -> Int -> Reader GameSetup Board
+-- | creates a [Board] with necessary dice added
+addNewDice :: Board  -- ^ the Board to add dice to
+           -> Player -- ^ the player getting the dice
+           -> Int -- ^ how many dice to add
+           -> Reader GameSetup Board
 addNewDice b p d = do
   md <- asks maxDice
   let pcs = playerCells b p
