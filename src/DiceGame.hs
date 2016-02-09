@@ -86,28 +86,30 @@ buildTree :: Board  -- ^ the starting position for the tree
           -> Reader GameSetup GameTree  -- ^ the root node of the GameTree
 buildTree brd plyr srdc fm atk = do
   g <- ask
-  return $ mGT plyr brd atk $ addPassingMoves g brd plyr srdc fm $
-    runReader (addAttackingMoves brd plyr srdc) g
+  return $ mGT plyr brd atk $ runReader (addPassingMoves brd plyr srdc fm $
+    addAttackingMoves brd plyr srdc ) g
 
 -- | selects the next player based on the current player
 nxtPlyr :: Player -> GameSetup -> Player
 nxtPlyr p g = rem (p + 1) $ playerCnt g
 
 -- | helper function to buildTree that adds the turn-end move
-addPassingMoves :: GameSetup -- ^ the game configuration
-                -> Board  -- ^ the board the player is passing on
+addPassingMoves :: Board  -- ^ the board the player is passing on
                 -> Player  -- ^ the player doing the passing
                 -> Int  -- ^ how many dice the player captured prior to passing
                 -> Bool  -- ^ if this is the player's first move of the turn
-                -> [GameTree]  -- ^ the moves that an attack would generate
-                -> [GameTree]  -- ^ the attack moves plus the possible passing move
-addPassingMoves _ _ _ _ True mvs = mvs
-addPassingMoves g brd plyr srdc False mvs = 
-   (runReader (buildTree (addNewDice g brd plyr (srdc - 1)) 
-              (nxtPlyr plyr g) 
-              0 
-              True
-              Nothing) g) : mvs
+                -> Reader GameSetup [GameTree]  -- ^ the moves that an attack would generate
+                -> Reader GameSetup [GameTree]  -- ^ the attack moves plus the possible passing move
+addPassingMoves _ _ _ True mvs = mvs
+addPassingMoves brd plyr srdc False mvs = do
+  g <- ask
+  bs <- mvs
+  n <- buildTree (addNewDice g brd plyr (srdc - 1)) 
+             (nxtPlyr plyr g) 
+             0 
+             True
+             Nothing
+  return $ n : bs
 
 addNewDice :: GameSetup -> Board -> Player -> Int -> Board
 addNewDice gs b p d = 
