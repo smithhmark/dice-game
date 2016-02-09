@@ -172,7 +172,7 @@ attacks :: Board
 attacks b p = do
   nf <- asks neighborF
   let srcs = playerCells b p
-      nes = map (removeFriendlies2 srcs . nf) srcs
+      nes = map (removeFriendlies p b . nf) srcs
       val = winnable b $ zip srcs nes
   return $ concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
 
