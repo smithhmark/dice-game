@@ -13,6 +13,7 @@ The "Land of Lisp" book has a great extended example of building a dice game fro
 | profiling time of execution  | stack has flags for this plus some explicit ghc flags  | the stack stuff is [here](https://github.com/commercialhaskell/stack/blob/master/doc/GUIDE.md#debugging) the compiler flags came from [here](http://stackoverflow.com/a/3276557)  |
 | there were unsafe head issues with handling AI players  | i used Safe.headNote to help debug this  |  |
 | I fixed the unsafe head issues by using a priority queue |  | i Used PQueue. other priority queue implementations do not allow you to easily discover the priorities |
+| The stresstest executable occation takes up a HUGE amount of space.  | the -hy profiling flag can be used to determine what objects are being allocated.  use the hp2pretty tool to turn the output file (stress.hp) into something usable by a human  |  |
 |  |  |  |
 
 ## other sources
