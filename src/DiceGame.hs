@@ -165,6 +165,9 @@ potentialTargets p b srcs ns = zip srcs enemies
 winnable :: Board -> [(Int, [Int])] -> [(Int, [Int])]
 winnable b = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds))
 
+flattenMoves :: [(Int, [Int])] -> [(Int, Int)]
+flattenMoves = concat . map (\(s,ds)-> [(s, d)| d <- ds])
+
 -- | produces the list of viable attack moves
 attacks :: Board
         -> Player
@@ -174,7 +177,7 @@ attacks b p = do
   let srcs = playerCells b p
       nes = map (removeFriendlies p b . nf) srcs
       val = winnable b $ zip srcs nes
-  return $ concat $ map (\(s,ds)-> [(s, d)| d <- ds]) val
+  return $ flattenMoves val
 
 -- | produces the list of viable post-attack board positions
 addAttackingMoves :: Board -> Player -> Int -> Reader GameSetup [GameTree]
