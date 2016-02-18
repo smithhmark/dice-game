@@ -163,7 +163,10 @@ potentialTargets p b srcs ns = zip srcs enemies
 -- | given a [Board] and a list of attack possibilities, filter them to only
 -- those with a favorable dice imbalance.
 winnable :: Board -> [(Int, [Int])] -> [(Int, [Int])]
-winnable b = map (\(s, ds)->(s, filter (\d-> diceAt d b < diceAt s b) ds))
+winnable b = map (\(s, ds)->(s, filter (\d->fewerDice b (s,d)) ds))
+
+fewerDice :: Board -> (Int, Int) -> Bool
+fewerDice b (s, d) = diceAt d b < diceAt s b
 
 flattenMoves :: [(Int, [Int])] -> [(Int, Int)]
 flattenMoves = concat . map (\(s,ds)-> [(s, d)| d <- ds])
