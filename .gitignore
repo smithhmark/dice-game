@@ -3,4 +3,5 @@
 *.o
 .cabal-sandbox
 *.prof
+*.hp
 
