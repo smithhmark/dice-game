@@ -151,7 +151,8 @@ playerCells b p = V.toList $! V.findIndices (ownedByP p) b
 
 removeFriendlies :: Player -> Board -> [Int] -> [Int]
 removeFriendlies p b = filter pred
-  where pred x = not (ownedByP p (b ! x))
+  where pred x = let a = ownedByP p (b ! x)
+                 in a `seq` not a
 
 removeFriendlies2 :: [Int] -> [Int] -> [Int]
 removeFriendlies2 ps qs = qs \\ ps
@@ -169,7 +170,7 @@ fewerDice :: Board -> (Int, Int) -> Bool
 fewerDice b (s, d) = diceAt d b < diceAt s b
 
 flattenMoves :: [(Int, [Int])] -> [(Int, Int)]
-flattenMoves = concat . map (\(s,ds)-> [(s, d)| d <- ds])
+flattenMoves = concatMap (\(s,ds)-> [(s, d)| d <- ds])
 
 -- | produces the list of viable attack moves
 attacks :: Board
@@ -179,8 +180,8 @@ attacks b p = do
   nf <- asks neighborF
   let srcs = playerCells b p
       nes = map (removeFriendlies p b . nf) srcs
-      val = winnable b $ zip srcs nes
-  return $ flattenMoves val
+      flat = flattenMoves $ zip srcs nes
+  return $ filter (fewerDice b) flat
 
 -- | produces the list of viable post-attack board positions
 addAttackingMoves :: Board -> Player -> Int -> Reader GameSetup [GameTree]
