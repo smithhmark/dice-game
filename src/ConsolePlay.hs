@@ -25,8 +25,7 @@ announceWinner b = do
 
 -- | The main loop for a human vs computer game
 playVsComputer :: GameSetup -> GameTree -> IO ()
-playVsComputer _ Exit = do
-  putStrLn "Thanks for playing"
+playVsComputer _ Exit = putStrLn "Thanks for playing"
 playVsComputer g t@(GameTree _ _ _ []) = do
   printInfo g t
   announceWinner $ board t
@@ -39,17 +38,13 @@ playVsComputer g t = do
 
 -- | The main loop for a computer player only game
 cpuVsCpu :: GameSetup -> GameTree -> IO ()
-cpuVsCpu _ Exit = do
-  putStrLn "Thanks for playing"
-cpuVsCpu _ t@(GameTree _ _ _ []) = do
-  announceWinner $ board t
-cpuVsCpu g t = do
-  cpuVsCpu g $ handleHeuristicComputer g t
+cpuVsCpu _ Exit = putStrLn "Thanks for playing"
+cpuVsCpu _ t@(GameTree _ _ _ []) = announceWinner $ board t
+cpuVsCpu g t = cpuVsCpu g $ handleHeuristicComputer g t
 
 -- | The main loop for a humans only game
 playVsHuman :: GameSetup -> GameTree -> IO ()
-playVsHuman _ Exit = do
-  putStrLn "Thanks for playing!"
+playVsHuman _ Exit = putStrLn "Thanks for playing!"
 playVsHuman g t = do
   printInfo g t
   case length (moves t) of 0 -> announceWinner $ board t
@@ -73,14 +68,14 @@ paddedStringifyBoard g b p = concat ls
         ss = [ V.foldr (\c a -> stringifyCell c ++ " " ++ a) "\n" 
                 $ V.slice x s b 
                 | x  <- idxs ]
-        p1s = [ concat $ (take (s - x) $ repeat "  ") | x <- [0..(s-1)] ]
-        p2s = [ concat $ (take (p) (cycle [" ","|"])) | _ <- [0..(s-1)] ]
+        p1s = [ concat (replicate (s - x) "  ") | x <- [0..(s-1)] ]
+        p2s = [ concat (take p (cycle [" ","|"])) | _ <- [0..(s-1)] ]
         ps = zipWith (++) p2s p1s
         ls = zipWith (++) ps ss
 
 
 stringifyTree :: GameSetup -> GameTree -> Int -> String
-stringifyTree g t d = strTree g t 0 d
+stringifyTree g t = strTree g t 0
 
 -- | contains the logic to create a string of the board
 strTree :: GameSetup -> GameTree -> Int -> Int -> String
@@ -102,8 +97,7 @@ formatMoveOpt _ Exit = "Exited"
 
 -- | allows the human to select the move they want
 handleHuman :: GameTree -> IO GameTree
-handleHuman Exit = do
-  return Exit
+handleHuman Exit = return Exit
 handleHuman t = do
   putStrLn ""
   putStrLn "choose your move:"
@@ -116,4 +110,4 @@ handleHuman t = do
               "quit" -> return Exit
               _ -> do
                 let i = read opt :: Int
-                return $ (moves t) !! i
+                return $ moves t !! i
