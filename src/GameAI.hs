@@ -24,12 +24,11 @@ ratePosAbsolute :: GameTree -- ^ the game tree we are scoring
                 -> Float -- ^ the score being returned
 ratePosAbsolute Exit _ = 0.0 -- ^ a degenerate case that shouldn't happen
 ratePosAbsolute (GameTree _ b _ []) p = if p `elem` w 
-                                        then 1.0 / (fromIntegral $ length w)
+                                        then 1.0 / fromIntegral (length w)
                                         else 0.0
   where w = winners b
 ratePosAbsolute t@(GameTree cp _ _ _) p = f ( getRatingsA t p)
-  where f = case p == cp of True -> (maximum) 
-                            False -> (minimum)
+  where f = if p == cp then maximum else minimum
 
 -- | a function to select the move the computer will make
 handlePerfectComputer :: GameTree -- ^ the current game position
@@ -57,7 +56,7 @@ limitTreeDepth' :: GameTree -- ^ The tree to limit
                 -> GameTree -- ^ the limited tree
 limitTreeDepth' Exit _ = Exit
 limitTreeDepth' (GameTree p b a ms) 0 = 
-  mGT p b a $ concat $ map (\st@(GameTree lp _ _ ms) ->
+  mGT p b a $ concatMap (\st@(GameTree lp _ _ ms) ->
       if lp == p 
       then [limitTreeDepth' st 0]
       else []) ms
@@ -81,7 +80,7 @@ threatened gs pos b =
       pred i 
         | diceAt i b > dice = True
         | otherwise = False
-  in and $ map pred es
+  in all pred es
 
 -- | scores a board. Threatened cells are worth one, unthreated cells 2.
 scoreBoard :: GameSetup -> Board -> Player -> Int
@@ -98,8 +97,7 @@ ratePosHeuristic :: GameSetup -> GameTree -> Player -> Float
 ratePosHeuristic _ Exit _ = 0.0
 ratePosHeuristic gs (GameTree _ b _ []) p = fromIntegral $ scoreBoard gs b p
 ratePosHeuristic gs t@(GameTree cp _ _ _) p = f ( getRatingsH gs t p)
-  where f = case p == cp of True -> (maximum) 
-                            False -> (minimum)
+  where f = if p == cp then maximum else minimum
 
 rateOwnChildren :: GameSetup 
                 -> GameTree
@@ -126,9 +124,9 @@ ratePosHeuristic2 :: GameSetup -> GameTree -> Player -> (Float, GameTree)
 ratePosHeuristic2 _ Exit _ = (0.0, Exit)
 ratePosHeuristic2 gs t@(GameTree _ b _ []) p = (
   fromIntegral $ scoreBoard gs b p, t)
-ratePosHeuristic2 gs t@(GameTree cp _ _ _) p = case p == cp of
-  True -> MxQ.findMax $ rateOwnChildren gs t p
-  False -> MnQ.findMin $ rateOtherChildren gs t p
+ratePosHeuristic2 gs t@(GameTree cp _ _ _) p = if p == cp 
+  then MxQ.findMax $ rateOwnChildren gs t p
+  else MnQ.findMin $ rateOtherChildren gs t p
 
 -- | a function to select the move the computer will make
 handleHeuristicComputer :: GameSetup -- ^ the config
