@@ -1,17 +1,19 @@
 module GameAI where
 
 import Data.Vector (Vector, (!), (//))
+import qualified Data.List as L
 import qualified Data.Vector as V
 import qualified Data.PQueue.Prio.Max as MxQ
 import qualified Data.PQueue.Prio.Min as MnQ
-import DiceGame
 import qualified Safe as S
+
+import DiceGame
 
 getRatings :: GameTree -> Player -> [Float]
 getRatings = getRatingsA
 
 getRatingsA :: GameTree -> Player -> [Float]
-getRatingsA t p = map (\m-> ratePosAbsolute m p) $ moves t
+getRatingsA t p = map (`ratePosAbsolute` p) $ moves t
 
 ratePosition :: GameTree -> Player -> Float
 ratePosition = ratePosAbsolute
@@ -34,7 +36,7 @@ handlePerfectComputer :: GameTree -- ^ the current game position
                       -> GameTree -- ^ the resulting game position
 handlePerfectComputer t@(GameTree p _ _ ms) = snd $ MxQ.findMax q
   where ifn a (v, k) = MxQ.insert k v a
-        q = foldl ifn MxQ.empty $ zip ms $ getRatingsA t $ player t
+        q = L.foldl' ifn MxQ.empty $ zip ms $ getRatingsA t $ player t
 handlePerfectComputer Exit = Exit
 
 
@@ -105,7 +107,7 @@ rateOwnChildren :: GameSetup
                 -> MxQ.MaxPQueue Float GameTree
 rateOwnChildren _gs Exit _p = MxQ.empty -- ^ degenerate case
 rateOwnChildren _gs (GameTree _ _ _ []) _p = MxQ.empty 
-rateOwnChildren gs t@(GameTree _p _b _a ms) p = foldl work MxQ.empty ms
+rateOwnChildren gs t@(GameTree _p _b _a ms) p = L.foldl' work MxQ.empty ms
   where work acc m = let score = fst $ ratePosHeuristic2 gs m p
                      in MxQ.insert score m acc
 
@@ -135,3 +137,6 @@ handleHeuristicComputer :: GameSetup -- ^ the config
 handleHeuristicComputer _ Exit = Exit
 handleHeuristicComputer gs t@(GameTree p _ _ ms) = 
   snd $ ratePosHeuristic2 gs t p 
+
+
+
