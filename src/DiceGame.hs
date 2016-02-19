@@ -147,8 +147,8 @@ neighbors sz pos = filter (>= 0) . filter (< ml) $ g2 ++ g3
         g2 = if leftEdgeP then [up] else [up -1, up, pos -1]
         g3 = if rightEdgeP then [down] else [pos + 1, down, down + 1]
 
-playerCells:: Board -> Player -> [Int]
-playerCells b p = V.toList $! V.findIndices (ownedByP p) b
+playerCells :: Board -> Player -> [Int]
+playerCells b p = V.ifoldr' (\i c a-> if ownedByP p c then i:a else a) [] b
 
 removeFriendlies :: Player -> Board -> [Int] -> [Int]
 removeFriendlies p b = filter pred
