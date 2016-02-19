@@ -61,6 +61,10 @@ randBoard gs = V.replicateM l $ randCell p d
         p = playerCnt gs
         d = maxDice gs
 
+-- | Genereate a [Board] from a list of Cells
+customBoard :: [Cell] -> Board
+customBoard = V.fromList
+
 -- | public function to generate a random board from a GameSetup
 generateBoard :: GameSetup -> IO (Vector Cell)
 generateBoard gs = evalRandIO $ randBoard gs
