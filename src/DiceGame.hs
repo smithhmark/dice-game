@@ -27,7 +27,7 @@ data GameSetup = GameSetup { playerCnt :: Int
                            , boardSize :: Int
                            , maxDice :: Int
                            , aiLevel :: Int
-                           , neighborF :: (Int -> [Int])
+                           , neighborF :: Int -> [Int]
                            }-- deriving (Show)
 
 data GameTree = GameTree { player :: Player
@@ -40,7 +40,7 @@ data GameTree = GameTree { player :: Player
 buildGS :: Int -> Int -> Int -> GameSetup
 buildGS ps sz md = GameSetup ps sz md 2 f
   where table = V.fromList [ neighbors sz x | x <- [0..(sz*sz-1)]]
-        f = \x-> table ! x
+        f = (table !)
 
 -- | This type makes generating random boards slightly cleaner
 type Rnd a = Rand StdGen a
@@ -63,14 +63,13 @@ randBoard gs = V.replicateM l $ randCell p d
 
 -- | public function to generate a random board from a GameSetup
 generateBoard :: GameSetup -> IO (Vector Cell)
-generateBoard gs = do
-  evalRandIO $ randBoard gs
+generateBoard gs = evalRandIO $ randBoard gs
 
 -- | knowns enough of the game rules to bulid a cell from 
 -- the number of players and he max number of dice
 randCell :: Int -> Int -> Rnd Cell
 randCell np d = do
-  o <- getRandomR (0, (np - 1)) :: Rnd Int
+  o <- getRandomR (0, np - 1) :: Rnd Int
   c <- getRandomR (1, d) :: Rnd Int
   return $ Cell o c
 
@@ -133,7 +132,7 @@ ownedByP :: Player -> Cell -> Bool
 ownedByP p c = p == owner c
 
 neighbors :: Int -> Int -> [Int]
-neighbors sz pos = filter (>= 0) . filter (< ml) $ concat [g2, g3]
+neighbors sz pos = filter (>= 0) . filter (< ml) $ g2 ++ g3
   where ml = sz * sz
         up = pos - sz
         down = pos + sz
@@ -141,10 +140,8 @@ neighbors sz pos = filter (>= 0) . filter (< ml) $ concat [g2, g3]
                                          _ -> False
         rightEdgeP = case (pos + 1) `rem` sz of 0 -> True
                                                 _ -> False
-        g2 = case leftEdgeP of False -> [up -1, up, pos -1]
-                               True -> [up]
-        g3 = case rightEdgeP of False -> [pos + 1, down, down + 1]
-                                True -> [down]
+        g2 = if leftEdgeP then [up] else [up -1, up, pos -1]
+        g3 = if rightEdgeP then [down] else [pos + 1, down, down + 1]
 
 playerCells:: Board -> Player -> [Int]
 playerCells b p = V.toList $! V.findIndices (ownedByP p) b
@@ -199,8 +196,8 @@ attackBoard b p (src,dst) d = b // [sc, dc]
         dc = (dst, Cell p (d - 1))
 
 territoryCount :: Board -> M.Map Player Int
-territoryCount brd = foldr work M.empty brd
-  where work (Cell p _d) ac= M.insertWith (+) p 1 ac
+territoryCount = foldr work M.empty
+  where work (Cell p _d) = M.insertWith (+) p 1
 
 winners :: Board -> [Player]
 winners b = M.keys $ M.filter (== mx) cnts
