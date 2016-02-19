@@ -118,7 +118,7 @@ addNewDice b p d = do
   let pcs = playerCells b p
       haveRoom = filter (\i-> diceAt i b < md) pcs
       spots = length haveRoom
-      updates = foldr (\i a-> (i, Cell p (diceAt i b + 1)):a) [] 
+      updates = foldl' (\a i-> (i, Cell p (diceAt i b + 1)):a) [] 
         $ take d haveRoom
   return $ b // updates
 
@@ -196,8 +196,8 @@ attackBoard b p (src,dst) d = b // [sc, dc]
         dc = (dst, Cell p (d - 1))
 
 territoryCount :: Board -> M.Map Player Int
-territoryCount = foldr work M.empty
-  where work (Cell p _d) = M.insertWith (+) p 1
+territoryCount = foldl' work M.empty
+  where work ac (Cell p _d) = M.insertWith (+) p 1 ac
 
 winners :: Board -> [Player]
 winners b = M.keys $ M.filter (== mx) cnts
