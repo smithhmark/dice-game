@@ -115,7 +115,7 @@ rateOtherChildren :: GameSetup
                   -> MnQ.MinPQueue Float GameTree
 rateOtherChildren _gs Exit _p = MnQ.empty
 rateOtherChildren _gs (GameTree _ _ _ []) _p = MnQ.empty
-rateOtherChildren gs t@(GameTree _p _b _a ms) p = foldl work MnQ.empty ms
+rateOtherChildren gs t@(GameTree _p _b _a ms) p = foldl' work MnQ.empty ms
   where work acc m = let score = fst $ ratePosHeuristic2 gs m p
                      in MnQ.insert score m acc
 
