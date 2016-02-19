@@ -150,13 +150,11 @@ neighbors sz pos = filter (>= 0) . filter (< ml) $ g2 ++ g3
 playerCells :: Board -> Player -> [Int]
 playerCells b p = V.ifoldr' (\i c a-> if ownedByP p c then i:a else a) [] b
 
-removeFriendlies :: Player -> Board -> [Int] -> [Int]
-removeFriendlies p b = filter pred
-  where pred x = let a = ownedByP p (b ! x)
-                 in a `seq` not a
+playerPos :: Board -> Player -> [(Int, Cell)]
+playerPos b p = V.ifoldr' (\i c a-> if ownedByP p c then (i,c):a else a) [] b
 
-removeFriendlies2 :: [Int] -> [Int] -> [Int]
-removeFriendlies2 ps qs = qs \\ ps
+removeFriendlies :: Player -> Board -> [Int] -> [Int]
+removeFriendlies p b = filter (\i->p /= playerAt i b)
 
 potentialTargets :: Player -> Board -> [Int] -> [[Int]] -> [(Int, [Int])]
 potentialTargets p b srcs ns = zip srcs enemies
